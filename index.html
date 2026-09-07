@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VA Mastery Academy — Training Simulator</title>
+<meta name="description" content="A hands-on, visual training simulator for real virtual-assistant client work.">
+<meta name="theme-color" content="#1F5C4A">
+
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="VA Academy">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --primary:#1F5C4A;
+  --primary-d:#163f33;
+  --primary-l:#2d7a63;
+  --cream:#F7F4EC;
+  --paper:#FFFFFF;
+  --charcoal:#252A27;
+  --sage:#A8C3B5;
+  --sage-d:#7fa190;
+  --gold:#C8A96B;
+  --red:#B54339;
+  --red-bg:#F7E7E5;
+  --orange:#C1793A;
+  --orange-bg:#F8ECDD;
+  --blue:#3D6FA8;
+  --blue-bg:#E6EEF6;
+  --green-bg:#E5EFE9;
+  --border: rgba(37,42,39,0.13);
+  --shadow: 0 1px 2px rgba(37,42,39,0.06), 0 6px 20px rgba(37,42,39,0.05);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:'Work Sans', sans-serif;
+  background:var(--cream);
+  color:var(--charcoal);
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{font-family:'Spectral', serif; margin:0 0 .4em 0; font-weight:600; color:var(--primary-d);}
+h1{font-size:2rem; font-weight:700;}
+h2{font-size:1.5rem;}
+h3{font-size:1.15rem;}
+p{margin:0 0 .8em 0;}
+a{color:var(--primary);}
+button{font-family:inherit; cursor:pointer;}
+.app-shell{display:flex; min-height:100vh;}
+
+/* SIDEBAR */
+.sidebar{
+  width:230px; flex-shrink:0; background:var(--primary-d); color:var(--cream);
+  padding:22px 14px; position:sticky; top:0; height:100vh; overflow-y:auto;
+}
+.brand{display:flex; align-items:center; gap:10px; padding:0 8px 20px 8px; border-bottom:1px solid rgba(247,244,236,0.15); margin-bottom:14px;}
+.brand-mark{width:34px;height:34px;border-radius:8px;background:var(--gold); display:flex;align-items:center;justify-content:center;font-family:'Spectral',serif;font-weight:700;color:var(--primary-d); font-size:1.1rem;}
+.brand-name{font-family:'Spectral',serif; font-weight:600; font-size:1rem; line-height:1.2; color:var(--cream);}
+.brand-sub{font-size:.7rem; opacity:.7; letter-spacing:.02em;}
+.nav-item{
+  display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:8px;
+  color:rgba(247,244,236,0.82); font-size:.92rem; font-weight:500; margin-bottom:2px; border:none; background:none; width:100%; text-align:left;
+}
+.nav-item:hover{background:rgba(247,244,236,0.08); color:var(--cream);}
+.nav-item.active{background:var(--gold); color:var(--primary-d); font-weight:600;}
+.nav-icon{width:18px; text-align:center; flex-shrink:0;}
+.nav-section-label{font-size:.68rem; text-transform:uppercase; letter-spacing:.08em; opacity:.5; margin:16px 8px 6px 8px;}
+
+/* MAIN */
+.main{flex:1; min-width:0; padding:32px 40px 80px 40px; max-width:1100px;}
+.eyebrow{display:inline-block; font-size:.72rem; font-weight:600; letter-spacing:.04em; color:var(--primary); background:var(--green-bg); padding:3px 10px; border-radius:20px; margin-bottom:10px;}
+.crumbs{font-size:.85rem; color:#6b7269; margin-bottom:6px;}
+.crumbs button{background:none;border:none;color:var(--primary);font-weight:600;font-size:.85rem;padding:0;}
+
+/* CARDS */
+.card{background:var(--paper); border:1px solid var(--border); border-radius:12px; padding:20px 22px; box-shadow:var(--shadow);}
+.card + .card{margin-top:16px;}
+.grid{display:grid; gap:16px;}
+.grid-2{grid-template-columns:repeat(2,1fr);}
+.grid-3{grid-template-columns:repeat(3,1fr);}
+.grid-4{grid-template-columns:repeat(4,1fr);}
+@media(max-width:900px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr 1fr;}}
+@media(max-width:600px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr;}}
+
+/* TASK LIBRARY CARD */
+.task-tile{cursor:pointer; transition:transform .12s, box-shadow .12s;}
+.task-tile:hover{transform:translateY(-2px); box-shadow:0 4px 6px rgba(37,42,39,.08), 0 12px 28px rgba(37,42,39,.09);}
+.tile-top{display:flex; justify-content:space-between; align-items:flex-start; gap:8px;}
+.badge{display:inline-block; font-size:.7rem; font-weight:600; padding:2px 9px; border-radius:20px;}
+.badge-beginner{background:var(--green-bg); color:var(--primary-d);}
+.badge-intermediate{background:var(--orange-bg); color:var(--orange);}
+.badge-advanced{background:var(--red-bg); color:var(--red);}
+.meta-row{display:flex; gap:14px; font-size:.8rem; color:#6b7269; margin-top:10px; flex-wrap:wrap;}
+.skill-chip{display:inline-block; background:var(--sage); color:var(--primary-d); font-size:.72rem; font-weight:600; padding:3px 9px; border-radius:6px; margin:2px 4px 0 0;}
+.mastery-pill{font-size:.72rem; font-weight:700; padding:3px 10px; border-radius:20px;}
+.mastery-0{background:#eee; color:#888;}
+.mastery-mid{background:var(--orange-bg); color:var(--orange);}
+.mastery-done{background:var(--green-bg); color:var(--primary-d);}
+
+/* CLIENT MESSAGE BUBBLE */
+.client-msg-wrap{display:flex; gap:12px; align-items:flex-start; margin:10px 0;}
+.avatar{width:40px;height:40px;border-radius:50%; background:var(--primary); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-family:'Spectral',serif; flex-shrink:0;}
+.client-bubble{background:var(--blue-bg); border-radius:4px 14px 14px 14px; padding:14px 16px; max-width:520px; font-size:.95rem;}
+.client-name{font-weight:700; font-size:.85rem; color:var(--primary-d); margin-bottom:3px;}
+.platform-tag{font-size:.68rem; color:#6b7269; margin-top:4px;}
+
+/* TOOL CARD */
+.tool-card{display:flex; gap:12px; align-items:flex-start; background:var(--cream); border:1px solid var(--border); border-radius:10px; padding:12px 14px;}
+.tool-emoji{font-size:1.4rem;}
+.tool-why{font-size:.82rem; color:#565c56;}
+
+/* WORKFLOW DIAGRAM */
+.workflow{display:flex; flex-wrap:wrap; align-items:center; gap:0; margin:14px 0;}
+.wf-node{background:var(--primary-d); color:#fff; font-size:.82rem; font-weight:600; padding:9px 14px; border-radius:8px; white-space:nowrap;}
+.wf-arrow{color:var(--gold); font-size:1.2rem; margin:0 8px; font-weight:700;}
+@media(max-width:700px){.workflow{flex-direction:column; align-items:flex-start;} .wf-arrow{transform:rotate(90deg); margin:2px 0 2px 16px;}}
+
+/* STEP CARD */
+.step-card{border-left:4px solid var(--primary); background:var(--cream); border-radius:0 10px 10px 0; padding:16px 18px; margin-bottom:14px;}
+.step-num{display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; background:var(--primary); color:#fff; font-weight:700; font-size:.85rem; margin-right:8px;}
+.why-box{background:var(--orange-bg); border-radius:8px; padding:10px 14px; font-size:.87rem; margin-top:10px; border-left:3px solid var(--gold);}
+.why-label{font-weight:700; color:var(--orange); font-size:.78rem; text-transform:uppercase; letter-spacing:.03em; margin-bottom:2px;}
+
+/* MOCK UI */
+.mock-window{border:1px solid var(--border); border-radius:10px; overflow:hidden; box-shadow:var(--shadow); margin:12px 0; background:#fff;}
+.mock-titlebar{background:#EDEAE1; padding:8px 12px; display:flex; align-items:center; gap:6px; font-size:.78rem; color:#6b7269; font-weight:600;}
+.mock-dot{width:9px;height:9px;border-radius:50%;background:#d8d3c6;}
+.mock-body{padding:0;}
+.mock-row{display:flex; align-items:center; gap:10px; padding:10px 14px; border-bottom:1px solid var(--border); font-size:.85rem; position:relative;}
+.mock-row:last-child{border-bottom:none;}
+.mock-highlight{outline:2px solid var(--gold); outline-offset:-2px; background:#FBF3E3;}
+.start-here-tag{position:absolute; right:10px; top:50%; transform:translateY(-50%); background:var(--gold); color:var(--primary-d); font-size:.68rem; font-weight:700; padding:3px 9px; border-radius:6px;}
+.mock-sender{font-weight:600; width:130px; flex-shrink:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.mock-subject{flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.mock-date{font-size:.75rem; color:#999; flex-shrink:0;}
+
+/* CATEGORY LABELS */
+.cat-chip{display:inline-flex; align-items:center; gap:5px; font-size:.72rem; font-weight:700; padding:3px 9px; border-radius:6px; cursor:pointer; border:1.5px solid transparent;}
+.cat-urgent{background:var(--red-bg); color:var(--red);}
+.cat-action{background:var(--orange-bg); color:var(--orange);}
+.cat-waiting{background:#FBF3D9; color:#93781f;}
+.cat-info{background:var(--green-bg); color:var(--primary-d);}
+.cat-reference{background:var(--blue-bg); color:var(--blue);}
+.cat-newsletter{background:#eee; color:#777;}
+.cat-chip.selected{border-color:currentColor;}
+
+/* CHECKLIST */
+.check-item{display:flex; align-items:flex-start; gap:10px; padding:8px 0; border-bottom:1px solid var(--border); font-size:.92rem;}
+.check-item:last-child{border-bottom:none;}
+.check-box{width:19px; height:19px; border-radius:5px; border:2px solid var(--sage-d); flex-shrink:0; margin-top:1px; display:flex; align-items:center; justify-content:center; font-size:.75rem; color:#fff; font-weight:700;}
+.check-box.checked{background:var(--primary); border-color:var(--primary);}
+.check-item.checked span{text-decoration:line-through; color:#8a8f89;}
+
+/* BEFORE AFTER */
+.ba-wrap{display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:stretch;}
+@media(max-width:700px){.ba-wrap{grid-template-columns:1fr;}}
+.ba-label{font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; padding:4px 10px; border-radius:20px; display:inline-block; margin-bottom:8px;}
+.ba-before{background:var(--red-bg); color:var(--red);}
+.ba-after{background:var(--green-bg); color:var(--primary-d);}
+
+/* BUTTONS */
+.btn{display:inline-flex; align-items:center; gap:6px; padding:10px 18px; border-radius:8px; font-weight:600; font-size:.9rem; border:none;}
+.btn-primary{background:var(--primary); color:#fff;}
+.btn-primary:hover{background:var(--primary-d);}
+.btn-gold{background:var(--gold); color:var(--primary-d);}
+.btn-outline{background:transparent; border:1.5px solid var(--primary); color:var(--primary);}
+.btn-ghost{background:none; color:var(--primary); font-weight:600; padding:8px 0;}
+.btn:disabled{opacity:.5; cursor:not-allowed;}
+
+/* PROGRESS BAR */
+.pbar-track{background:#EAE6DA; border-radius:20px; height:9px; overflow:hidden;}
+.pbar-fill{background:var(--primary); height:100%; border-radius:20px; transition:width .3s;}
+.pbar-row{display:flex; justify-content:space-between; font-size:.82rem; margin-bottom:4px; font-weight:600;}
+
+/* TABS within task */
+.subtabs{display:flex; gap:4px; border-bottom:2px solid var(--border); margin:18px 0 16px 0; flex-wrap:wrap;}
+.subtab{padding:9px 14px; font-size:.87rem; font-weight:600; color:#8a8f89; border:none; background:none; border-bottom:2px solid transparent; margin-bottom:-2px;}
+.subtab.active{color:var(--primary-d); border-bottom-color:var(--primary);}
+
+/* Priority matrix grid */
+.matrix-2x2{display:grid; grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; gap:10px; min-height:280px;}
+.mq{border-radius:10px; padding:12px; font-size:.82rem;}
+.mq-title{font-weight:700; font-size:.8rem; margin-bottom:6px;}
+.mq1{background:var(--red-bg);} .mq2{background:var(--orange-bg);} .mq3{background:var(--blue-bg);} .mq4{background:#eee;}
+.task-pill{background:#fff; border:1px solid var(--border); border-radius:6px; padding:5px 8px; font-size:.78rem; margin-bottom:5px; box-shadow:0 1px 2px rgba(0,0,0,.04);}
+
+/* Hint boxes */
+.hint-box{background:var(--blue-bg); border-radius:8px; padding:12px 14px; margin-top:10px; font-size:.88rem; border-left:3px solid var(--blue);}
+.hint-label{font-weight:700; color:var(--blue); font-size:.78rem; margin-bottom:2px;}
+
+/* Mistake box */
+.mistake-box{background:var(--red-bg); border-radius:8px; padding:12px 14px; margin-bottom:8px; font-size:.87rem; border-left:3px solid var(--red);}
+
+.divider{height:1px; background:var(--border); margin:20px 0;}
+.small-muted{font-size:.8rem; color:#7a8079;}
+.icon-circle{width:38px;height:38px;border-radius:9px;background:var(--sage); display:flex;align-items:center;justify-content:center; font-size:1.1rem; flex-shrink:0;}
+
+/* Mobile nav toggle */
+.mobile-topbar{display:none;}
+@media(max-width:820px){
+  .sidebar{position:fixed; left:-240px; top:0; z-index:50; transition:left .2s; box-shadow:4px 0 20px rgba(0,0,0,.25);}
+  .sidebar.open{left:0;}
+  .mobile-topbar{display:flex; align-items:center; justify-content:space-between; background:var(--primary-d); color:#fff; padding:14px 16px; position:sticky; top:0; z-index:40;}
+  .main{padding:20px 16px 70px 16px;}
+  .app-shell{display:block;}
+}
+.overlay{display:none;}
+.overlay.show{display:block; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:45;}
+</style>
+</head>
+<body>
+<div class="mobile-topbar">
+  <div style="display:flex;align-items:center;gap:8px;">
+    <div class="brand-mark">VA</div>
+    <div style="font-family:'Spectral',serif;font-weight:600;">VA Mastery Academy</div>
+  </div>
+  <button onclick="toggleSidebar()" style="background:none;border:none;color:#fff;font-size:1.4rem;">☰</button>
+</div>
+<div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+<div class="app-shell">
+  <div class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-mark">VA</div>
+      <div>
+        <div class="brand-name">VA Mastery<br>Academy</div>
+        <div class="brand-sub">Hands-on training simulator</div>
+      </div>
+    </div>
+    <div id="navList"></div>
+  </div>
+  <div class="main" id="main"></div>
+</div>
+
+<script>
+/* ============================= STATE / STORAGE ============================= */
+const LS = {
+  get(key, fallback){ try{ const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }catch(e){ return fallback; } },
+  set(key, val){ try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){} }
+};
+let state = { view:'dashboard', taskId:null, subtab:'brief' };
+
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('overlay').classList.toggle('show');
+}
+function go(view, taskId){
+  state.view = view; state.taskId = taskId || null; state.subtab='brief';
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+  window.scrollTo(0,0);
+  render();
+}
+
+/* ============================= DATA: TOOLS ============================= */
+const TOOL_MAP = [
+  {group:'Communication', tools:[
+    {name:'Gmail', tier:'first', why:'Nearly every client runs on Gmail or Google Workspace — this is your day-one tool.'},
+    {name:'Slack', tier:'first', why:'The default for quick client and team check-ins.'},
+    {name:'Zoom', tier:'first', why:'Used for calls and meetings you\\'ll often help schedule.'},
+    {name:'Outlook', tier:'next', why:'Common with corporate clients running Microsoft 365.'},
+    {name:'Microsoft Teams', tier:'next', why:'Outlook\\'s equivalent to Slack — good to recognize, not urgent to master.'},
+  ]},
+  {group:'Productivity', tools:[
+    {name:'Google Workspace (Docs/Sheets/Drive)', tier:'first', why:'The backbone of most VA deliverables — docs, trackers, shared files.'},
+    {name:'Microsoft 365 (Word/Excel)', tier:'next', why:'Same skills as Google Workspace, different interface — learn once you\\'re comfortable with Sheets.'},
+  ]},
+  {group:'Project Management', tools:[
+    {name:'Trello', tier:'first', why:'Simplest board tool — the easiest place to learn project management logic.'},
+    {name:'Asana', tier:'next', why:'More structured, common with mid-size teams.'},
+    {name:'ClickUp', tier:'next', why:'All-in-one, powerful but denser — learn after Trello/Asana.'},
+    {name:'Notion', tier:'master', why:'Highly flexible; worth mastering once you understand how clients like to organize information.'},
+  ]},
+  {group:'CRM', tools:[
+    {name:'HubSpot', tier:'next', why:'Common with marketing-driven small businesses.'},
+    {name:'Zoho CRM', tier:'next', why:'Popular with lean startups — similar logic to HubSpot.'},
+    {name:'Salesforce', tier:'master', why:'Enterprise-grade and complex — learn the fundamentals of CRM logic first elsewhere.'},
+  ]},
+  {group:'Automation', tools:[
+    {name:'Zapier', tier:'master', why:'A major differentiator once you\\'re comfortable — automates repetitive multi-app tasks.'},
+    {name:'Make', tier:'master', why:'Zapier\\'s more visual, more powerful cousin — for after you\\'ve automated a few workflows in Zapier.'},
+  ]},
+  {group:'Design & Scheduling', tools:[
+    {name:'Canva', tier:'next', why:'Frequently requested for social posts, one-pagers, and simple decks.'},
+    {name:'Calendly', tier:'next', why:'Removes the back-and-forth of scheduling — a very common VA setup task.'},
+  ]},
+  {group:'AI Assistants', tools:[
+    {name:'Claude / ChatGPT', tier:'first', why:'Your force-multiplier for drafting, summarizing, and research — learn to prompt these well early.'},
+    {name:'Gemini / Copilot', tier:'next', why:'Same skillset as Claude/ChatGPT, just embedded inside Google/Microsoft tools.'},
+  ]},
+];
+const TIER_LABEL = {first:'LEARN FIRST', next:'LEARN NEXT', master:'MASTER LATER'};
+const TIER_COLOR = {first:'badge-beginner', next:'badge-intermediate', master:'badge-advanced'};
+
+/* ============================= DATA: CORPORATE -> VA MAP ============================= */
+const CORP_MAP = [
+  {from:'Handling 60–90 SAP SD support tickets a month', to:'High-volume inbox & task triage — sorting many incoming items fast without dropping anything'},
+  {from:'Working inside a formal ITSM system (ServiceNow / SAP Solution Manager)', to:'Comfort learning any structured tool: CRMs, project boards, ticketing systems'},
+  {from:'Mentoring ~10 junior colleagues', to:'Writing clear SOPs and how-to documentation a client\\'s team can actually follow'},
+  {from:'Order-to-Cash process ownership', to:'End-to-end operations thinking — seeing a request through from start to finish, not just one step'},
+  {from:'Doing SD configuration on service-request tickets', to:'Following a defined process precisely, with an eye for what "done correctly" looks like'},
+  {from:'Coordinating with global stakeholders across time zones (S/4HANA support)', to:'Async-first client communication — clear updates that don\\'t require a live meeting'},
+  {from:'Root-causing recurring incidents', to:'Spotting the real "why" behind a client request instead of just doing the surface task'},
+  {from:'Working under SLAs and deadlines', to:'Prioritization instinct — urgent vs. important, and communicating realistic timelines'},
+  {from:'Producing configuration and process documentation', to:'Client reporting — turning raw activity into a clean, readable summary'},
+  {from:'Being the go-to person for a live production system', to:'Reliability as a trust signal — the trait clients pay a premium for in a VA'},
+  {from:'Working across ECC and S/4HANA versions', to:'Comfort being a fast learner on unfamiliar software — a core VA skill'},
+  {from:'Managing multiple concurrent tickets with different priorities', to:'Multitasking across a CEO\\'s inbox, calendar, and task list in the same morning'},
+];
+
+/* ============================= DATA: CHEAT SHEETS ============================= */
+const CHEAT_SHEETS = [
+  {title:'Email Management', icon:'📧', points:[
+    '🔴 Urgent — client-facing, time-critical, or from someone senior',
+    '🟠 Action Required — needs a reply or task, no fixed deadline',
+    '🟡 Waiting/Follow-up — you\\'re blocked on someone else\\'s reply',
+    '🟢 Informational — no action needed, just context',
+    '🔵 Reference — save for later (contracts, receipts, credentials)',
+    '⚪ Newsletter — archive or unsubscribe',
+    'Rule of thumb: touch each email once — decide, don\\'t re-read.'
+  ]},
+  {title:'Calendar Management', icon:'📅', points:[
+    'Fixed commitments (client calls, board meetings) move last — everything else moves around them',
+    'Always add 10–15 min buffers around back-to-back meetings',
+    'Confirm time zone explicitly — never assume',
+    'When rescheduling, offer 2–3 alternative slots, not just "when works?"',
+    'Flag true conflicts to the client — don\\'t silently choose for them if both meetings matter'
+  ]},
+  {title:'Prioritization (Eisenhower)', icon:'🎯', points:[
+    'Urgent + Important → Do Now',
+    'Important, not Urgent → Schedule it (this is where good VAs create the most value)',
+    'Urgent, not Important → Delegate if possible',
+    'Neither → Archive/ignore',
+    'If everything feels urgent, that\\'s a sign to clarify with the client, not to freeze'
+  ]},
+  {title:'SOP Writing', icon:'📝', points:[
+    'Purpose — why this process exists',
+    'Scope — where it starts and ends',
+    'Owner — who is accountable',
+    'Trigger — what kicks it off',
+    'Numbered steps — one action per step, written for someone who has never done it',
+    'Quality check — how you know it was done right',
+    'Escalation — what to do when something goes wrong'
+  ]},
+  {title:'Client Communication', icon:'💬', points:[
+    'Lead with the outcome, not the process ("Inbox is sorted — 2 things need you today")',
+    'Never leave a request acknowledged-but-silent for more than a day',
+    'When you\\'re unsure of scope, ask one specific clarifying question — don\\'t guess',
+    'Bad news: state it plainly, then immediately offer the next step',
+    'Close every update loop — even "nothing needed from you" is worth saying'
+  ]},
+  {title:'Daily VA Checklist', icon:'✅', points:[
+    'Start: check messages → check calendar → review deadlines → plan priorities',
+    'During: update tasks as you go, communicate blockers immediately',
+    'End: review what\\'s done vs. pending → send a short client update → set tomorrow\\'s top 3'
+  ]},
+];
+
+/* ============================= DATA: DECISION SCENARIOS ============================= */
+const DECISIONS = [
+  {
+    id:'d1',
+    prompt:'A client messages: "Can you quickly update this spreadsheet?" You open it — it has 500 rows, and the client says they need it back in 20 minutes.',
+    options:[
+      {id:'a', text:'Say yes immediately and start working as fast as possible.'},
+      {id:'b', text:'Reply that you can\\'t do it and leave it there.'},
+      {id:'c', text:'Ask exactly what needs to change and confirm the real deadline before starting.'},
+      {id:'d', text:'Do a partial update and hope it\\'s good enough.'}
+    ],
+    correct:'c',
+    explanation:'A 500-row sheet almost never needs every row touched — "update" usually means something specific. Clarifying scope in one short message (30 seconds) protects you from redoing work and protects the client from getting the wrong thing back in 20 minutes. Saying yes blindly (A) risks a rushed, wrong result; refusing (B) is unhelpful when a scoped version of the task is probably very doable; guessing (D) is how trust gets lost.'
+  },
+  {
+    id:'d2',
+    prompt:'You\\'re mid-way through organizing an inbox when the client Slacks: "Also — can you jump on a call in 5 minutes to fill in for me?" You\\'re not prepared and don\\'t know the topic.',
+    options:[
+      {id:'a', text:'Say yes and hope you can figure it out live.'},
+      {id:'b', text:'Ignore the message until you finish the inbox.'},
+      {id:'c', text:'Reply immediately, explain you\\'re not briefed on the topic, and ask what they need you to cover or represent.'},
+      {id:'d', text:'Decline without explanation.'}
+    ],
+    correct:'c',
+    explanation:'Speed of response matters more than the inbox task right now — a same-minute reply keeps the client from being blindsided. Being honest about not being briefed, while offering to help however you can, protects both your credibility and the client\\'s meeting outcome.'
+  },
+  {
+    id:'d3',
+    prompt:'Two meetings on the CEO\\'s calendar overlap by 30 minutes. One is a recurring internal team sync; the other is a first call with a potential investor, added yesterday.',
+    options:[
+      {id:'a', text:'Move the investor call — it was added more recently.'},
+      {id:'b', text:'Move the recurring internal sync and notify the team, then flag the change to the CEO.'},
+      {id:'c', text:'Leave both and let the CEO figure it out.'},
+      {id:'d', text:'Cancel the internal sync entirely without telling anyone.'}
+    ],
+    correct:'b',
+    explanation:'Weigh importance, not recency. An investor call is high-stakes and hard to reschedule gracefully; a recurring internal sync is lower-stakes and easier to move. Moving it, informing the team, and flagging the change (not silently deciding and disappearing) keeps everyone informed — that\\'s the job.'
+  }
+];
+
+/* ============================= DATA: TASKS ============================= */
+const TASKS = [
+{
+  id:'email-cleanup', client:'Marcus Webb — Founder, Northline Studio', difficulty:'Beginner', time:'30–45 min',
+  tools:[{icon:'📧',name:'Gmail',why:'This is where the mess lives — you\\'ll triage directly in the inbox.'},{icon:'📊',name:'Google Sheets',why:'To hand the client a clean written summary they can scan in 10 seconds.'}],
+  skills:['Email Management','Prioritization','Client Communication'],
+  platform:'Slack DM',
+  request:'Hey! I\\'m drowning — I think I have around 120 unread emails after two weeks of back-to-back client pitches. Can you go through my inbox, organize everything, and tell me what actually needs my attention today? I don\\'t want to miss anything from a client or make someone feel ignored.',
+  missionGoal:'Turn a chaotic, unread-heavy inbox into a clearly labeled, prioritized set of categories — and tell Marcus exactly what needs him today.',
+  missionNotes:['You are NOT simply making the unread count zero.','You must review every message, categorize it, spot anything time-sensitive, and flag what genuinely needs his attention.','A "clean" inbox that buries an angry client email is a failed task.'],
+  workflow:['Client Request','Identify Objective','Identify Deadline','Identify Priority','Choose Tool','Perform Task'],
+  steps:[
+    {title:'Understand the Request', body:'Marcus didn\\'t ask for "zero unread" — he asked for two things: organization, and a heads-up on what\\'s urgent. Before touching anything, restate the job to yourself: sort everything into categories, and surface anything client-facing or deadline-driven.', why:'If you start clicking before you know the actual goal, you\\'ll optimize for the wrong thing — like archiving fast instead of reading carefully.'},
+    {title:'Open Gmail and Get Oriented', mock:'gmail-start', body:'Open the inbox and sort by unread first. Don\\'t start replying yet — do one full pass just reading sender + subject line for every message, so you have the full picture before you categorize anything.', why:'Seeing the whole inbox first stops you from making a snap judgment on message #3 that you\\'d reverse by message #40.'},
+    {title:'Categorize Every Message', body:'For each email, ask: does this need action, and if so, how fast? Apply one of six labels as you go: Urgent, Action Required, Waiting/Follow-up, Informational, Reference, Newsletter.', why:'Categorizing (not deleting) is what lets Marcus trust that nothing was missed — he can always look at any category later.'},
+    {title:'Flag and Archive', body:'Star or flag anything Urgent or Action Required so it\\'s visible at a glance. Archive purely informational and newsletter items that need no further action — archiving isn\\'t deleting, it\\'s getting it out of the active view.', why:'A CEO opening their inbox should see 5–10 things that matter, not 120 things of mixed importance.'}
+  ],
+  categorize:{
+    emails:[
+      {id:1, from:'Sandra Kim (Legal Counsel)', subject:'URGENT: Contract needs signature by 5pm today', date:'Today, 9:02am', correct:'urgent'},
+      {id:2, from:'Northline Payroll', subject:'Payroll processed successfully', date:'Today, 8:15am', correct:'info'},
+      {id:3, from:'David — Atlas Retail (client)', subject:'Can we push our kickoff to Thursday?', date:'Today, 7:40am', correct:'action'},
+      {id:4, from:'LinkedIn', subject:'5 people viewed your profile this week', date:'Yesterday, 6:00pm', correct:'newsletter'},
+      {id:5, from:'Priya — Design Lead', subject:'Waiting on your logo feedback before we proceed', date:'Yesterday, 3:20pm', correct:'waiting'},
+      {id:6, from:'Angry Customer via Web Form', subject:'This is the third time I\\'m emailing about my refund', date:'Today, 6:55am', correct:'urgent'},
+      {id:7, from:'AWS Billing', subject:'Your invoice for August is ready', date:'2 days ago', correct:'reference'},
+      {id:8, from:'James — Freelance Copywriter', subject:'Here\\'s the draft you asked for, no rush', date:'Yesterday, 11am', correct:'action'},
+      {id:9, from:'Industry Weekly', subject:'This week in creative agencies', date:'3 days ago', correct:'newsletter'},
+      {id:10, from:'Bank of the Philippines', subject:'Your monthly statement is available', date:'3 days ago', correct:'reference'},
+      {id:11, from:'Elena — Prospective Client', subject:'Loved the proposal — one question before we sign', date:'Today, 8:50am', correct:'urgent'},
+      {id:12, from:'Northline HR', subject:'Reminder: benefits enrollment closes Friday', date:'2 days ago', correct:'action'},
+      {id:13, from:'Tom — Ops Manager', subject:'FYI, server migration went smoothly overnight', date:'Today, 5:30am', correct:'info'},
+      {id:14, from:'Priya — Design Lead', subject:'Following up — did you see my message from Tuesday?', date:'Today, 7:00am', correct:'waiting'},
+      {id:15, from:'Canva', subject:'New templates just for you', date:'4 days ago', correct:'newsletter'},
+    ],
+    catInfo:{
+      urgent:{label:'🔴 Urgent', cls:'cat-urgent', explain:'Client-facing, time-boxed, or reputationally risky — this needs Marcus\\'s eyes today, no exceptions.'},
+      action:{label:'🟠 Action Required', cls:'cat-action', explain:'Needs a response or decision, but isn\\'t on a strict clock — can be batched into "today\\'s work."'},
+      waiting:{label:'🟡 Waiting/Follow-up', cls:'cat-waiting', explain:'Someone is blocked on Marcus — flag it so it doesn\\'t silently age into an "urgent" next week.'},
+      info:{label:'🟢 Informational', cls:'cat-info', explain:'No action needed — good to archive once skimmed.'},
+      reference:{label:'🔵 Reference', cls:'cat-reference', explain:'Worth keeping searchable, but not part of today\\'s triage.'},
+      newsletter:{label:'⚪ Newsletter', cls:'cat-newsletter', explain:'Safe to archive immediately — this is inbox noise.'}
+    }
+  },
+  before:'120 unread messages, no labels, urgent client emails buried between newsletters, an angry customer email sitting unanswered for 2 days.',
+  after:'0 unread requiring action left uncategorized. 3 items flagged Urgent, 5 flagged Action Required, 4 archived as Informational, 3 archived as Newsletter — plus a 4-line summary sent to Marcus.',
+  checklist:[
+    'I understood that the goal was organization + urgency triage, not zero unread',
+    'I read every message before categorizing any of them',
+    'I identified anything client-facing or time-boxed',
+    'I applied a category to every message',
+    'I flagged/starred anything Urgent or Action Required',
+    'I archived Informational and Newsletter items',
+    'I wrote Marcus a short, scannable summary'
+  ],
+  tryIt:{
+    prompt:'New client, same job, no instructions this time.',
+    client:'Renata Alva — Managing Partner, Alva & Cole Law',
+    request:'I was at a conference all week and my inbox is a disaster. Can you sort it out and let me know what can\\'t wait?',
+    hints:[
+      'Start by scanning every subject line once before categorizing anything — don\\'t react to the first urgent-looking one and lose the big picture.',
+      'A law firm inbox will have a lot of "reference" material (filings, invoices) — don\\'t let it clutter your urgent/action categories.'
+    ],
+    answer:'Apply the same six categories. Anything from a court, opposing counsel, or a client with a deadline goes Urgent. Internal scheduling and vendor requests go Action Required. Anything where Renata is waiting on someone else goes Waiting/Follow-up. Filings and invoices go Reference. Firm newsletters and bar association updates go Newsletter or Informational. Finish with a 3–5 line summary: counts per category, plus the 2–3 items she should personally look at today.'
+  },
+  mistakes:[
+    'Deleting instead of archiving — clients often want to find something later; archiving preserves it, deleting destroys it.',
+    'Marking too many things "Urgent" — if 40 emails are urgent, nothing is. Be selective.',
+    'Replying to emails on the client\\'s behalf without being asked to — your job here was triage, not correspondence, unless explicitly told otherwise.',
+    'Sending the client a wall of text instead of a short, scannable summary.'
+  ],
+  clientUpdate:'Hi Marcus — inbox is sorted. 3 things need you today (flagged ⭐): the contract from Sandra due 5pm, the refund complaint that\\'s now on its third email, and a quick question from Elena before she signs. Everything else is labeled by category so you can dig in anytime. Let me know if you\\'d like me to draft replies to any of the three.'
+},
+{
+  id:'calendar-travel', client:'Elena Cho — CEO, Cho & Rivers Consulting', difficulty:'Intermediate', time:'45–60 min',
+  tools:[{icon:'📅',name:'Google Calendar',why:'You\\'ll be moving, confirming, and buffering meetings directly here.'},{icon:'💬',name:'Slack/Email',why:'To notify affected attendees and confirm the final schedule with Elena.'}],
+  skills:['Calendar Management','Prioritization','Time Zone Coordination'],
+  platform:'Email',
+  request:'I\\'ll be traveling to our Singapore office next week (Mon–Wed, GMT+8 while I\\'m there). Please look at my calendar, sort out anything that conflicts with the trip, and make sure my important meetings are still covered — I can\\'t miss the board update or the client renewal call.',
+  missionGoal:'Reconcile Elena\\'s existing calendar against her travel window, resolve every conflict, and confirm a final schedule she can trust without double-checking it herself.',
+  missionNotes:['Not every meeting is equally important — the board update and client renewal call are non-negotiable.','Time zone math has to be exact — GMT+8 vs her home time zone GMT+0 is an 8-hour gap.','Silently moving something without telling the attendee is a mistake, even if the new time is objectively fine.'],
+  workflow:['Review Calendar','Identify Conflicts','Check Priorities','Check Time Zones','Find Available Slots','Reschedule','Add Buffers','Confirm with Client'],
+  steps:[
+    {title:'Review the Existing Calendar', mock:'calendar-start', body:'Look at every meeting scheduled Mon–Wed and note which are fixed (external, hard to move) versus flexible (internal, easy to shift).', why:'You can\\'t prioritize what you haven\\'t fully mapped out first.'},
+    {title:'Overlay the Travel Window', body:'Elena will be on GMT+8 for the trip, not her usual GMT+0. Convert every meeting time and flag anything that now falls at an unreasonable hour (e.g., a "9am her time" call becomes 5pm in Singapore — check if that\\'s workable).', why:'A meeting that "still fits" on the calendar grid can be unworkable once you check what time it actually is for a jet-lagged CEO.'},
+    {title:'Resolve Each Conflict', body:'For each conflict: if one meeting is clearly higher priority (board update, client renewal), keep it fixed and move the other. Add a 15-minute travel/transition buffer around anything right after a flight or immediately before a critical call.', why:'Protecting the two non-negotiable meetings is the actual success criterion here — everything else is negotiable around them.'},
+    {title:'Notify and Confirm', body:'Send a short note to anyone whose meeting moved, and send Elena the final reconciled schedule for a quick confirmation before you consider it done.', why:'A rescheduled meeting nobody was told about is a bigger problem than the original conflict.'}
+  ],
+  calendarData:{
+    before:[
+      {day:'Mon', time:'9:00am', title:'Board Update Call', tag:'fixed', note:'Non-negotiable'},
+      {day:'Mon', time:'11:00am', title:'Internal Ops Sync', tag:'flexible'},
+      {day:'Mon', time:'2:00pm', title:'1:1 with COO', tag:'flexible'},
+      {day:'Tue', time:'8:00am', title:'Client Renewal Call — Whitmore Group', tag:'fixed', note:'Non-negotiable'},
+      {day:'Tue', time:'10:00am', title:'Marketing Review', tag:'flexible'},
+      {day:'Tue', time:'1:00pm', title:'Flight lands Singapore', tag:'travel'},
+      {day:'Wed', time:'9:00am', title:'Team All-Hands', tag:'flexible'},
+      {day:'Wed', time:'3:00pm', title:'Vendor Contract Call', tag:'flexible'},
+    ],
+    after:[
+      {day:'Mon', time:'9:00am', title:'Board Update Call (kept — Elena still GMT+0)', tag:'fixed'},
+      {day:'Mon', time:'11:30am', title:'Internal Ops Sync (shifted +30m, buffer added)', tag:'moved'},
+      {day:'Mon', time:'2:00pm', title:'1:1 with COO — moved to async doc', tag:'moved'},
+      {day:'Tue', time:'8:00am', title:'Client Renewal Call — kept as-is (still GMT+0 on travel morning)', tag:'fixed'},
+      {day:'Tue', time:'10:00am', title:'Marketing Review — moved to Thursday', tag:'moved'},
+      {day:'Tue', time:'1:00pm → buffer to 3:00pm', title:'Travel + arrival buffer (no meetings booked)', tag:'travel'},
+      {day:'Wed', time:'10:00am SGT', title:'Team All-Hands (converted to 10am SGT = reasonable for a jet-lagged morning)', tag:'moved'},
+      {day:'Wed', time:'3:00pm SGT', title:'Vendor Contract Call — moved to next Monday', tag:'moved'},
+    ]
+  },
+  checklist:[
+    'I reviewed every meeting in the affected window before changing anything',
+    'I identified which meetings were fixed vs. flexible',
+    'I converted every time correctly for the GMT+8 window',
+    'I protected both non-negotiable meetings (board update, client renewal)',
+    'I added buffers around travel and back-to-back calls',
+    'I notified every attendee whose meeting moved',
+    'I sent Elena the final schedule for confirmation'
+  ],
+  tryIt:{
+    prompt:'A new travel scenario, no instructions this time.',
+    client:'Raj Patel — VP Sales, Northbeam SaaS',
+    request:'I\\'m flying to our Berlin office Wed–Fri (CET, which is 7 hours ahead of my usual Pacific time). Can you make sure nothing falls through the cracks — especially my Friday pipeline review with the investors.',
+    hints:[
+      'A 7-hour gap means a meeting that\\'s fine at 8am Pacific could land in the middle of Raj\\'s Berlin night — check every single time.',
+      'Treat the Friday investor pipeline review the same way you treated Elena\\'s board update: it moves nothing else, everything else moves around it.'
+    ],
+    answer:'Map all Wed–Fri meetings, convert each to CET, and flag any that land outside reasonable Berlin waking hours (roughly 7am–8pm CET). Keep the Friday investor review fixed and build the rest of Friday around it with buffers. Move flexible internal meetings to before the trip or the following week, and confirm the final Wed–Fri schedule with Raj before calling it done.'
+  },
+  mistakes:[
+    'Forgetting to convert time zones and just keeping the same clock time — this is the single most common (and most damaging) calendar mistake.',
+    'Moving a meeting without telling the other attendee.',
+    'Treating every meeting as equally movable — always protect the 1–2 truly fixed commitments first.',
+    'Not adding any buffer around travel, leaving no room for delays or jet lag.'
+  ],
+  clientUpdate:'Hi Elena — your Mon–Wed calendar is reconciled for Singapore time. Board update and the Whitmore renewal call are both untouched and confirmed. I moved 4 flexible meetings (Ops Sync, 1:1 with COO, Marketing Review, Vendor Call) to times that work around your travel, and added buffers after your flight lands. Everyone affected has been notified — full updated calendar is attached for a quick check.'
+},
+{
+  id:'priority-matrix', client:'You — Daily VA Practice', difficulty:'Beginner', time:'20–30 min',
+  tools:[{icon:'🎯',name:'Priority Matrix (Eisenhower)',why:'The single most useful mental model for deciding what to do first as a VA juggling multiple clients.'}],
+  skills:['Prioritization','Time Management','Decision Making'],
+  platform:'Internal Practice',
+  request:'It\\'s 8:30am. Fifteen things have landed on your plate across two clients this morning. Nothing is labeled by priority for you — that\\'s your job to figure out.',
+  missionGoal:'Sort every task into the correct quadrant of the Urgent/Important matrix, and understand *why* — not just where it lands, but what to actually do about each quadrant.',
+  missionNotes:['"Urgent" means time-sensitive. "Important" means high-consequence if not done well.','These are not the same thing — a lot of VA training fails learners right here.','The goal isn\\'t a perfect sort on the first try. It\\'s building the instinct.'],
+  workflow:['List All Tasks','Ask: Is it Urgent?','Ask: Is it Important?','Place in Quadrant','Decide Action per Quadrant'],
+  steps:[
+    {title:'Separate Urgent from Important', body:'Urgent = has a clock on it. Important = affects the client\\'s business or trust if done poorly or missed. A task can be one, both, or neither.', why:'Confusing these two is why new VAs (and new employees generally) spend all day on loud-but-low-value requests.'},
+    {title:'Place Each Task', mock:'matrix', body:'Urgent+Important → Do Now. Important, not Urgent → Schedule a specific time for it (don\\'t let it slide forever). Urgent, not Important → Delegate or handle quickly without overinvesting. Neither → Archive or decline.', why:'The "Important, not Urgent" quadrant is where the best VAs create the most long-term value — it\\'s also the easiest quadrant to accidentally neglect.'},
+    {title:'Build Today\\'s Actual Order', body:'Once sorted, sequence your morning: Do Now items first (in the order their deadlines demand), then a scheduled block for Important/not-Urgent work, then quick handling of the Delegate pile.', why:'A matrix that never turns into an ordered task list hasn\\'t actually helped you get through the day.'}
+  ],
+  priorityTasks:[
+    {id:1, text:'Client\\'s biggest customer just emailed a complaint threatening to cancel', correct:'q1'},
+    {id:2, text:'Draft the quarterly content calendar (due in 3 weeks)', correct:'q2'},
+    {id:3, text:'Newsletter subscription renewal reminder', correct:'q4'},
+    {id:4, text:'CEO needs the board deck reformatted before a call in 40 minutes', correct:'q1'},
+    {id:5, text:'Research 5 CRM options for a project starting next month', correct:'q2'},
+    {id:6, text:'A vendor is calling to confirm a routine delivery — anyone on the team can take it', correct:'q3'},
+    {id:7, text:'Update the SOP for client onboarding (no deadline, but overdue)', correct:'q2'},
+    {id:8, text:'Slack notification from a channel you don\\'t need to monitor', correct:'q4'},
+    {id:9, text:'Reply to a same-day meeting-time request from a partner', correct:'q3'},
+    {id:10, text:'Payment processor flags a failed transaction affecting live orders', correct:'q1'},
+    {id:11, text:'Plan next quarter\\'s hiring needs with the ops lead', correct:'q2'},
+    {id:12, text:'A routine weekly report is due today, low visibility if late by a day', correct:'q3'},
+    {id:13, text:'An old promotional email in your inbox with no action needed', correct:'q4'},
+    {id:14, text:'Client\\'s biggest investor pitch is tomorrow and slides aren\\'t finalized', correct:'q1'},
+    {id:15, text:'Set up a recurring process to auto-tag incoming leads (would save hours weekly)', correct:'q2'},
+  ],
+  quadInfo:{q1:{label:'🔴 Do Now', sub:'Urgent + Important', cls:'mq1'}, q2:{label:'🟠 Schedule', sub:'Important, not Urgent', cls:'mq2'}, q3:{label:'🟡 Delegate', sub:'Urgent, not Important', cls:'mq3'}, q4:{label:'⚪ Archive/Ignore', sub:'Neither', cls:'mq4'}},
+  checklist:[
+    'I correctly distinguished "urgent" from "important" for each item',
+    'I placed every one of the 15 tasks into a quadrant',
+    'I understood the recommended action for each quadrant, not just the label',
+    'I built an actual sequenced order for the morning',
+    'I recognize that the Schedule quadrant is where I create the most long-term value'
+  ],
+  tryIt:{
+    prompt:'A new morning, no labels, no instructions — just the raw list.',
+    client:'Multitasking Simulation',
+    request:'8:30 CEO requests a calendar change. 8:35 a customer complaint arrives. 8:40 the team asks for a report. 8:45 a meeting reminder pings. 8:50 a client asks for a spreadsheet update. Decide: what do you do first, what can wait, what needs clarification, and what needs escalation?',
+    hints:[
+      'A "reminder" ping (8:45) is rarely actionable on its own — check if it requires anything from you at all before spending time on it.',
+      'The customer complaint and the CEO\\'s calendar change are both plausible Do Now candidates — the tiebreaker is usually: which one has an external, client-facing clock on it?'
+    ],
+    answer:'Likely order: (1) Customer complaint — check severity immediately, since client-facing issues compound fast if ignored; if serious, this is Do Now. (2) CEO\\'s calendar change — Do Now if it affects an imminent meeting. (3) Client\\'s spreadsheet update — clarify scope/deadline quickly (don\\'t start blind), then schedule. (4) Team\\'s report request — Schedule, unless they stated a same-day deadline. (5) Meeting reminder — usually needs nothing from you beyond showing up; lowest priority of the five.'
+  },
+  mistakes:[
+    'Treating everything with a deadline as equally urgent, regardless of actual consequence.',
+    'Letting the loudest request (a phone call, a red notification) win by default instead of by importance.',
+    'Never scheduling time for "Important, not Urgent" work — it always gets crowded out and becomes a crisis later.',
+    'Trying to do all 15 things simultaneously instead of sequencing them.'
+  ]
+},
+{
+  id:'sop-creation', client:'Devon Marsh — Operations Lead, Fernwell Health', difficulty:'Intermediate', time:'45–60 min',
+  tools:[{icon:'📝',name:'Google Docs',why:'SOPs need to be a clean, shareable, living document the whole team can reference.'}],
+  skills:['SOP Creation','Process Mapping','Documentation'],
+  platform:'Email',
+  request:'Right now, new customers get added to our CRM, then someone emails them, then we schedule a welcome meeting — but it\\'s different every time depending on who\\'s doing it. Can you turn this into an actual SOP the whole team can follow?',
+  missionGoal:'Turn a loosely-described, inconsistent process into a numbered, unambiguous Standard Operating Procedure anyone on the team could follow without guessing.',
+  missionNotes:['A good SOP removes decisions the process shouldn\\'t require, not just lists what "usually" happens.','You have to infer some missing details (who owns it, what tool triggers it) — flag your assumptions rather than hiding them.','The output is a document, not a one-line description — "create an SOP" is not itself a finished deliverable.'],
+  workflow:['Messy Process Description','Extract the Real Steps','Identify Owner & Trigger','Structure the SOP','Add Quality Check & Escalation','Finished SOP'],
+  steps:[
+    {title:'Extract the Real Steps', body:'From Devon\\'s message, the actual sequence is: (1) new customer added to CRM, (2) someone emails them, (3) welcome meeting scheduled. That\\'s only 3 loose steps — you need to break each into clear, single actions.', why:'Vague verbs like "someone emails them" hide 3–4 real decisions (who emails, using what template, within what timeframe).'},
+    {title:'Fill the Structural Gaps', body:'Assign an Owner (who is accountable if this breaks — likely whoever manages the CRM), a Trigger (a new deal marked "Closed Won", most likely), and a realistic timeframe for each step (e.g., "within 1 business day").', why:'Without an owner and trigger, an SOP is just a description — it won\\'t actually prevent the inconsistency Devon is complaining about.'},
+    {title:'Write It in SOP Structure', body:'Use: Purpose, Scope, Owner, Tools, Trigger, numbered Steps, Quality Check, Escalation, Completion Criteria. Keep each step to one action, written as an instruction ("Add the customer to HubSpot under...") not a description ("the customer is added").', why:'Numbered, single-action steps are what makes a document actually followable versus just informative.'}
+  ],
+  sopExample:{
+    purpose:'Ensure every new customer receives a consistent, timely welcome experience.',
+    scope:'From the moment a deal is marked Closed Won in the CRM, through the completed welcome meeting.',
+    owner:'Customer Success Coordinator',
+    tools:'HubSpot CRM, Gmail, Google Calendar',
+    trigger:'A deal status changes to "Closed Won" in HubSpot.',
+    stepsList:[
+      'Within 1 business day: add the new customer\\'s full contact details to HubSpot under the "Active Customers" list.',
+      'Within 1 business day: send the standard Welcome Email (template: "New Customer Welcome") from the shared support inbox.',
+      'Within 2 business days: send a calendar invite for a 30-minute Welcome Meeting, offering at least 2 time options.',
+      'On Welcome Meeting completion: log meeting notes in the customer\\'s HubSpot record.'
+    ],
+    qualityCheck:'Confirm the customer record shows a completed welcome email and a scheduled or completed welcome meeting within 3 business days of Closed Won.',
+    escalation:'If the customer hasn\\'t responded to scheduling within 3 business days, notify the Customer Success Lead for manual follow-up.',
+    completion:'Welcome email sent, welcome meeting held, and meeting notes logged in HubSpot.'
+  },
+  checklist:[
+    'I broke each vague step into single, clear actions',
+    'I assigned an owner and a trigger, even though neither was explicitly stated',
+    'I wrote every step as an instruction, not a description',
+    'I included a quality check and an escalation path',
+    'I defined clear completion criteria',
+    'I flagged any assumptions I made to Devon rather than hiding them'
+  ],
+  tryIt:{
+    prompt:'A new messy process, no structure given.',
+    client:'Refund Process — Fernwell Health',
+    request:'When a customer wants a refund, they usually email support, someone checks the order, and if it\\'s within 30 days we process it — otherwise we have to check with finance.',
+    hints:[
+      'There are two very different paths hiding in this one description (within 30 days vs. outside 30 days) — your SOP needs to handle the branch, not just the happy path.',
+      'What happens if finance says no? That\\'s your Escalation section.'
+    ],
+    answer:'Purpose: consistent, timely refund handling. Trigger: customer refund request received via support email. Steps: (1) Log the request and order number in the support tool within 1 business day. (2) Verify the order date. (3) If within 30 days, process the refund and confirm to the customer within 2 business days. (4) If outside 30 days, escalate to Finance with the order details and await a decision within 3 business days. Quality Check: refund status and customer confirmation logged in every case. Escalation: Finance declines → Customer Success Lead sends the customer a personalized explanation, not a form rejection.'
+  },
+  mistakes:[
+    'Writing steps as descriptions ("the customer gets an email") instead of instructions ("send the Welcome Email template").',
+    'Leaving out an owner — an SOP with no accountable person will drift right back into inconsistency.',
+    'Ignoring branches in the process (like the 30-day cutoff) and only documenting the simple path.',
+    'Skipping the escalation path — every real process eventually hits an exception.'
+  ]
+}
+];
+
+/* ============================= NAV ============================= */
+const NAV = [
+  {id:'dashboard', label:'Dashboard', icon:'🏠'},
+  {id:'tasks', label:'Task Library', icon:'📋'},
+  {id:'decisions', label:'What Would You Do?', icon:'🧭'},
+  {id:'tools', label:'Tool Map', icon:'🧰'},
+  {id:'cheatsheets', label:'Cheat Sheets', icon:'📄'},
+  {id:'mapping', label:'Your Experience → VA', icon:'🔗'},
+];
+
+function renderNav(){
+  const el = document.getElementById('navList');
+  el.innerHTML = `<div class="nav-section-label">Training</div>` +
+    NAV.map(n => `<button class="nav-item ${state.view===n.id?'active':''}" onclick="go('${n.id}')"><span class="nav-icon">${n.icon}</span>${n.label}</button>`).join('');
+}
+
+/* ============================= PROGRESS HELPERS ============================= */
+function getChecklist(taskId){ return LS.get('check_'+taskId, []); }
+function setChecklist(taskId, arr){ LS.set('check_'+taskId, arr); }
+function checklistPct(task){
+  const saved = getChecklist(task.id);
+  const total = task.checklist.length;
+  const done = task.checklist.filter((_,i)=>saved[i]).length;
+  return total? Math.round(done/total*100) : 0;
+}
+function getTryItState(taskId){ return LS.get('tryit_'+taskId, {hints:0, answer:false}); }
+function setTryItState(taskId, v){ LS.set('tryit_'+taskId, v); }
+function taskMastery(task){
+  const pct = checklistPct(task);
+  const tryIt = getTryItState(task.id);
+  if(pct===100 && tryIt.answer===false && tryIt.hints<2) return 'done'; // completed guided + attempted independently
+  if(pct===100) return 'done';
+  if(pct>0) return 'mid';
+  return 'none';
+}
+function overallSkillMatrix(){
+  const skillMap = {};
+  TASKS.forEach(t=>{
+    t.skills.forEach(s=>{
+      if(!skillMap[s]) skillMap[s] = {learn:0,practice:0,independent:0,total:0};
+      skillMap[s].total++;
+      const pct = checklistPct(t);
+      const tryIt = getTryItState(t.id);
+      skillMap[s].learn += 1;
+      if(pct>0) skillMap[s].practice += 1;
+      if(pct===100 && (tryIt.answer || tryIt.hints>0)) skillMap[s].independent += 1;
+    });
+  });
+  return skillMap;
+}
+function clientReadyScore(){
+  let totalPct = 0;
+  TASKS.forEach(t=> totalPct += checklistPct(t));
+  return Math.round(totalPct / TASKS.length);
+}
+
+/* ============================= RENDER: DASHBOARD ============================= */
+function renderDashboard(){
+  const readiness = clientReadyScore();
+  const matrix = overallSkillMatrix();
+  const featured = TASKS[0];
+  return `
+  <div class="eyebrow">Today's Mission</div>
+  <h1>Good morning — let's build real VA skill.</h1>
+  <div class="card" style="background:linear-gradient(135deg, var(--primary-d), var(--primary)); color:#fff; border:none;">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;">
+      <div>
+        <div style="font-size:.78rem; opacity:.8; font-weight:600; letter-spacing:.03em;">FEATURED TASK</div>
+        <h2 style="color:#fff; margin-top:4px;">${featured.client}</h2>
+        <p style="opacity:.9; max-width:480px; margin-bottom:0;">"${featured.request.slice(0,110)}..."</p>
+      </div>
+      <button class="btn btn-gold" onclick="go('taskDetail','${featured.id}')">Start This Task →</button>
+    </div>
+  </div>
+
+  <div class="grid grid-3" style="margin-top:18px;">
+    <div class="card">
+      <div class="icon-circle">🎯</div>
+      <h3 style="margin-top:10px;">Client-Ready Score</h3>
+      <div style="font-size:2.1rem; font-family:'Spectral',serif; font-weight:700; color:var(--primary);">${readiness}%</div>
+      <div class="pbar-track"><div class="pbar-fill" style="width:${readiness}%"></div></div>
+      <p class="small-muted" style="margin-top:8px;">Based on task checklists completed across the library.</p>
+    </div>
+    <div class="card">
+      <div class="icon-circle">📋</div>
+      <h3 style="margin-top:10px;">Tasks In Progress</h3>
+      <div style="font-size:2.1rem; font-family:'Spectral',serif; font-weight:700; color:var(--primary);">${TASKS.filter(t=>checklistPct(t)>0 && checklistPct(t)<100).length} / ${TASKS.length}</div>
+      <p class="small-muted" style="margin-top:8px;">Jump back into any task from the library.</p>
+    </div>
+    <div class="card">
+      <div class="icon-circle">✅</div>
+      <h3 style="margin-top:10px;">Tasks Mastered</h3>
+      <div style="font-size:2.1rem; font-family:'Spectral',serif; font-weight:700; color:var(--primary);">${TASKS.filter(t=>checklistPct(t)===100).length} / ${TASKS.length}</div>
+      <p class="small-muted" style="margin-top:8px;">Completed checklist + attempted independently.</p>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px;">
+    <h3>Skill Mastery Dashboard</h3>
+    <table style="width:100%; border-collapse:collapse; margin-top:8px;">
+      <thead><tr style="text-align:left; font-size:.78rem; color:#7a8079; border-bottom:1px solid var(--border);">
+        <th style="padding:6px 4px;">Skill</th><th>Learn</th><th>Practice</th><th>Independent</th><th style="width:35%;">Mastery</th>
+      </tr></thead>
+      <tbody>
+      ${Object.entries(matrix).map(([skill,v])=>{
+        const pct = Math.round(((v.learn>0?1:0)+(v.practice>0?1:0)+(v.independent>0?1:0))/3*100);
+        return `<tr style="border-bottom:1px solid var(--border); font-size:.88rem;">
+          <td style="padding:8px 4px; font-weight:600;">${skill}</td>
+          <td>${v.learn>0?'✓':'—'}</td><td>${v.practice>0?'✓':'—'}</td><td>${v.independent>0?'✓':'—'}</td>
+          <td><div class="pbar-track"><div class="pbar-fill" style="width:${pct}%"></div></div></td>
+        </tr>`;
+      }).join('')}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card" style="margin-top:16px;">
+    <h3>Where to go next</h3>
+    <div class="grid grid-2">
+      <div class="tool-card" style="cursor:pointer;" onclick="go('tasks')"><div class="tool-emoji">📋</div><div><b>Browse the Task Library</b><div class="tool-why">Every real-client scenario, sorted by difficulty.</div></div></div>
+      <div class="tool-card" style="cursor:pointer;" onclick="go('decisions')"><div class="tool-emoji">🧭</div><div><b>Practice fast judgment calls</b><div class="tool-why">"What Would You Do?" scenario training.</div></div></div>
+    </div>
+  </div>
+  `;
+}
+
+/* ============================= RENDER: TASK LIBRARY ============================= */
+function renderTasks(){
+  return `
+  <div class="eyebrow">Task Library</div>
+  <h1>Real client work, start to finish</h1>
+  <p class="small-muted" style="max-width:640px;">Each task walks through the full arc: understand the request, see it done, follow along, then try a new version on your own.</p>
+  <div class="grid grid-2" style="margin-top:14px;">
+  ${TASKS.map(t=>{
+    const pct = checklistPct(t);
+    const badgeCls = t.difficulty==='Beginner'?'badge-beginner':(t.difficulty==='Intermediate'?'badge-intermediate':'badge-advanced');
+    const mCls = pct===100?'mastery-done':(pct>0?'mastery-mid':'mastery-0');
+    const mLabel = pct===100?'Mastered':(pct>0?pct+'% done':'Not started');
+    return `<div class="card task-tile" onclick="go('taskDetail','${t.id}')">
+      <div class="tile-top">
+        <span class="badge ${badgeCls}">${t.difficulty}</span>
+        <span class="mastery-pill ${mCls}">${mLabel}</span>
+      </div>
+      <h3 style="margin-top:10px;">${t.client}</h3>
+      <p class="small-muted" style="margin-bottom:6px;">"${t.request.slice(0,90)}..."</p>
+      <div class="meta-row"><span>⏱ ${t.time}</span><span>🧰 ${t.tools.map(x=>x.name).join(', ')}</span></div>
+      <div style="margin-top:8px;">${t.skills.map(s=>`<span class="skill-chip">${s}</span>`).join('')}</div>
+    </div>`;
+  }).join('')}
+  </div>
+  `;
+}
+
+/* ============================= RENDER: TASK DETAIL ============================= */
+function mockGmail(task){
+  const items = task.categorize ? task.categorize.emails.slice(0,5) : [
+    {from:'Client Contact', subject:'Re: Project update', date:'9:02am'},
+    {from:'Newsletter', subject:'This week\\'s digest', date:'Yesterday'},
+    {from:'Team Member', subject:'Quick question', date:'Yesterday'},
+  ];
+  return `<div class="mock-window"><div class="mock-titlebar"><div class="mock-dot"></div><div class="mock-dot"></div><div class="mock-dot"></div>&nbsp;Gmail — Inbox</div>
+  <div class="mock-body">
+  ${items.map((e,i)=>`<div class="mock-row ${i===0?'mock-highlight':''}"><span class="mock-sender">${e.from}</span><span class="mock-subject">${e.subject}</span><span class="mock-date">${e.date}</span>${i===0?'<span class="start-here-tag">START HERE</span>':''}</div>`).join('')}
+  </div></div>`;
+}
+function mockCalendar(task){
+  const rows = task.calendarData ? task.calendarData.before.slice(0,5) : [];
+  return `<div class="mock-window"><div class="mock-titlebar"><div class="mock-dot"></div><div class="mock-dot"></div><div class="mock-dot"></div>&nbsp;Google Calendar — This Week</div>
+  <div class="mock-body">
+  ${rows.map((r,i)=>`<div class="mock-row ${i===0?'mock-highlight':''}"><span class="mock-sender">${r.day} ${r.time}</span><span class="mock-subject">${r.title}</span>${i===0?'<span class="start-here-tag">START HERE</span>':''}</div>`).join('')}
+  </div></div>`;
+}
+function mockMatrix(){
+  return `<div class="matrix-2x2">
+    <div class="mq mq1"><div class="mq-title">🔴 Do Now<br><span class="small-muted">Urgent + Important</span></div></div>
+    <div class="mq mq2"><div class="mq-title">🟠 Schedule<br><span class="small-muted">Important, not Urgent</span></div></div>
+    <div class="mq mq3"><div class="mq-title">🟡 Delegate<br><span class="small-muted">Urgent, not Important</span></div></div>
+    <div class="mq mq4"><div class="mq-title">⚪ Archive<br><span class="small-muted">Neither</span></div></div>
+  </div>`;
+}
+
+function renderTaskDetail(task){
+  const tabs = [
+    {id:'brief', label:'1 · Brief'},
+    {id:'walkthrough', label:'2 · Show Me How'},
+    {id:'practice', label:'3 · Practice'},
+    {id:'checklist', label:'4 · Checklist'},
+    {id:'tryit', label:'5 · Try It Yourself'},
+    {id:'wrapup', label:'6 · Wrap-Up'},
+  ];
+  let body = '';
+  if(state.subtab==='brief') body = renderBrief(task);
+  else if(state.subtab==='walkthrough') body = renderWalkthrough(task);
+  else if(state.subtab==='practice') body = renderPractice(task);
+  else if(state.subtab==='checklist') body = renderChecklistTab(task);
+  else if(state.subtab==='tryit') body = renderTryIt(task);
+  else if(state.subtab==='wrapup') body = renderWrapup(task);
+
+  return `
+  <div class="crumbs"><button onclick="go('tasks')">← Task Library</button></div>
+  <div class="eyebrow">REAL CLIENT TASK · ${task.difficulty}</div>
+  <h1>${task.client}</h1>
+  <div class="meta-row" style="margin-bottom:12px;"><span>⏱ ${task.time}</span><span>🧰 ${task.tools.map(t=>t.name).join(', ')}</span></div>
+  <div>${task.skills.map(s=>`<span class="skill-chip">${s}</span>`).join('')}</div>
+  <div class="subtabs">
+    ${tabs.map(t=>`<button class="subtab ${state.subtab===t.id?'active':''}" onclick="setSubtab('${t.id}')">${t.label}</button>`).join('')}
+  </div>
+  ${body}
+  `;
+}
+function setSubtab(id){ state.subtab=id; window.scrollTo(0,0); render(); }
+
+function renderBrief(task){
+  return `
+  <div class="card">
+    <h3>Client Request</h3>
+    <div class="client-msg-wrap">
+      <div class="avatar">${task.client[0]}</div>
+      <div>
+        <div class="client-name">${task.client}</div>
+        <div class="client-bubble">${task.request}</div>
+        <div class="platform-tag">via ${task.platform}</div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Your Mission</h3>
+    <p><b>Goal:</b> ${task.missionGoal}</p>
+    ${task.missionNotes.map(n=>`<div class="why-box" style="margin-bottom:8px;"><div class="why-label">Keep in mind</div>${n}</div>`).join('')}
+  </div>
+  <div class="card">
+    <h3>Tools Needed</h3>
+    <div class="grid grid-2">
+      ${task.tools.map(t=>`<div class="tool-card"><div class="tool-emoji">${t.icon}</div><div><b>${t.name}</b><div class="tool-why">${t.why}</div></div></div>`).join('')}
+    </div>
+  </div>
+  <button class="btn btn-primary" onclick="setSubtab('walkthrough')">See "Show Me How" →</button>
+  `;
+}
+
+function renderWalkthrough(task){
+  return `
+  <div class="card">
+    <h3>Visual Workflow</h3>
+    <div class="workflow">
+      ${task.workflow.map((w,i)=>`<div class="wf-node">${w}</div>${i<task.workflow.length-1?'<span class="wf-arrow">→</span>':''}`).join('')}
+    </div>
+  </div>
+  ${task.steps.map((s,i)=>`
+    <div class="step-card">
+      <h3><span class="step-num">${i+1}</span>${s.title}</h3>
+      <p>${s.body}</p>
+      ${s.mock==='gmail-start'?mockGmail(task):''}
+      ${s.mock==='calendar-start'?mockCalendar(task):''}
+      ${s.mock==='matrix'?mockMatrix():''}
+      ${s.why?`<div class="why-box"><div class="why-label">💡 Why this matters</div>${s.why}</div>`:''}
+    </div>
+  `).join('')}
+  <button class="btn btn-primary" onclick="setSubtab('practice')">Go to Practice →</button>
+  `;
+}
+
+function renderPractice(task){
+  if(task.categorize) return renderPracticeEmail(task);
+  if(task.calendarData) return renderPracticeCalendar(task);
+  if(task.priorityTasks) return renderPracticeMatrix(task);
+  if(task.sopExample) return renderPracticeSOP(task);
+  return `<div class="card">No hands-on practice module for this task yet.</div>`;
+}
+
+function renderPracticeEmail(task){
+  const saved = LS.get('practice_'+task.id, {});
+  const submitted = LS.get('practice_submitted_'+task.id, false);
+  const cats = task.categorize.catInfo;
+  return `
+  <div class="card">
+    <h3>Categorize the Inbox</h3>
+    <p class="small-muted">Click a category for each email below. This mirrors exactly what you'd do inside Gmail.</p>
+    ${task.categorize.emails.map(e=>{
+      const chosen = saved[e.id];
+      const isCorrect = submitted ? chosen === e.correct : null;
+      return `<div class="mock-window" style="margin-bottom:10px;">
+        <div class="mock-body">
+          <div class="mock-row" style="border-bottom:none;">
+            <div style="flex:1;">
+              <div><b>${e.from}</b></div>
+              <div class="small-muted">${e.subject} · ${e.date}</div>
+              <div style="margin-top:6px;">
+                ${Object.entries(cats).map(([k,v])=>`<button class="cat-chip ${v.cls} ${chosen===k?'selected':''}" onclick="pickCategory('${task.id}','${e.id}','${k}')">${v.label}</button>`).join(' ')}
+              </div>
+              ${submitted?`<div class="why-box" style="margin-top:8px; ${isCorrect?'':'border-left-color:var(--red)'}">
+                <div class="why-label" style="color:${isCorrect?'var(--primary)':'var(--red)'}">${isCorrect?'✓ Correct':'✗ Not quite — correct: '+cats[e.correct].label}</div>
+                ${cats[e.correct].explain}
+              </div>`:''}
+            </div>
+          </div>
+        </div>
+      </div>`;
+    }).join('')}
+    ${!submitted?`<button class="btn btn-primary" onclick="submitPractice('${task.id}')">Submit for Review</button>`:
+      `<div class="grid grid-3" style="margin-top:14px;">
+        ${Object.entries(cats).map(([k,v])=>`<div class="card" style="padding:12px;"><div class="cat-chip ${v.cls}">${v.label}</div><div style="font-size:1.4rem;font-weight:700;margin-top:6px;">${task.categorize.emails.filter(e=>e.correct===k).length}</div></div>`).join('')}
+      </div>
+      <div class="why-box" style="margin-top:12px;"><div class="why-label">Sample client summary</div>${task.clientUpdate}</div>
+      <button class="btn btn-outline" style="margin-top:10px;" onclick="resetPractice('${task.id}')">Try Again</button>`}
+  </div>
+  ${renderBeforeAfter(task)}
+  <button class="btn btn-primary" onclick="setSubtab('checklist')">Go to Checklist →</button>
+  `;
+}
+function pickCategory(taskId, emailId, cat){
+  const saved = LS.get('practice_'+taskId, {});
+  saved[emailId] = cat;
+  LS.set('practice_'+taskId, saved);
+  render();
+}
+function submitPractice(taskId){ LS.set('practice_submitted_'+taskId, true); render(); }
+function resetPractice(taskId){ LS.set('practice_'+taskId, {}); LS.set('practice_submitted_'+taskId, false); render(); }
+
+function renderPracticeCalendar(task){
+  return `
+  ${renderBeforeAfterCalendar(task)}
+  <div class="card">
+    <p>Study how each conflict above was resolved, then apply the same reasoning in the Try It Yourself scenario.</p>
+  </div>
+  <button class="btn btn-primary" onclick="setSubtab('checklist')">Go to Checklist →</button>
+  `;
+}
+function renderBeforeAfterCalendar(task){
+  const tagColor = {fixed:'var(--primary)', flexible:'#999', travel:'var(--gold)', moved:'var(--orange)'};
+  const row = r => `<div class="mock-row"><span class="mock-sender">${r.day} ${r.time}</span><span class="mock-subject">${r.title}</span><span style="width:10px;height:10px;border-radius:50%;background:${tagColor[r.tag]||'#999'};flex-shrink:0;"></span></div>`;
+  return `<div class="card"><h3>Before → After</h3>
+  <div class="ba-wrap">
+    <div><span class="ba-label ba-before">Before</span><div class="mock-window"><div class="mock-body">${task.calendarData.before.map(row).join('')}</div></div></div>
+    <div><span class="ba-label ba-after">After</span><div class="mock-window"><div class="mock-body">${task.calendarData.after.map(row).join('')}</div></div></div>
+  </div></div>`;
+}
+
+function renderPracticeMatrix(task){
+  const saved = LS.get('practice_'+task.id, {});
+  const submitted = LS.get('practice_submitted_'+task.id, false);
+  const quad = task.quadInfo;
+  return `
+  <div class="card">
+    <h3>Sort These 15 Tasks</h3>
+    <div class="grid grid-2" style="margin-bottom:14px;">
+    ${task.priorityTasks.map(p=>{
+      const chosen = saved[p.id];
+      const isCorrect = submitted ? chosen===p.correct : null;
+      return `<div class="task-pill" style="padding:8px 10px;">
+        <div>${p.text}</div>
+        <div style="margin-top:6px;">${Object.entries(quad).map(([k,v])=>`<button class="cat-chip ${chosen===k?'selected':''}" style="background:${v.cls==='mq1'?'var(--red-bg)':v.cls==='mq2'?'var(--orange-bg)':v.cls==='mq3'?'var(--blue-bg)':'#eee'}; color:${v.cls==='mq1'?'var(--red)':v.cls==='mq2'?'var(--orange)':v.cls==='mq3'?'var(--blue)':'#777'};" onclick="pickCategory('${task.id}','${p.id}','${k}')">${v.label}</button>`).join(' ')}</div>
+        ${submitted?`<div style="font-size:.78rem; margin-top:4px; color:${isCorrect?'var(--primary)':'var(--red)'};">${isCorrect?'✓ Correct':'✗ Better fit: '+quad[p.correct].label}</div>`:''}
+      </div>`;
+    }).join('')}
+    </div>
+    ${!submitted?`<button class="btn btn-primary" onclick="submitPractice('${task.id}')">Submit for Review</button>`:`<button class="btn btn-outline" onclick="resetPractice('${task.id}')">Try Again</button>`}
+  </div>
+  <button class="btn btn-primary" onclick="setSubtab('checklist')">Go to Checklist →</button>
+  `;
+}
+
+function renderPracticeSOP(task){
+  const s = task.sopExample;
+  return `
+  <div class="ba-wrap">
+    <div><span class="ba-label ba-before">Before — Messy Process</span>
+      <div class="card">"${task.request}"</div>
+    </div>
+    <div><span class="ba-label ba-after">After — Structured SOP</span>
+      <div class="card">
+        <p><b>Purpose:</b> ${s.purpose}</p>
+        <p><b>Scope:</b> ${s.scope}</p>
+        <p><b>Owner:</b> ${s.owner}</p>
+        <p><b>Tools:</b> ${s.tools}</p>
+        <p><b>Trigger:</b> ${s.trigger}</p>
+        <p><b>Steps:</b></p>
+        <ol>${s.stepsList.map(x=>`<li style="margin-bottom:6px;">${x}</li>`).join('')}</ol>
+        <p><b>Quality Check:</b> ${s.qualityCheck}</p>
+        <p><b>Escalation:</b> ${s.escalation}</p>
+        <p><b>Completion Criteria:</b> ${s.completion}</p>
+      </div>
+    </div>
+  </div>
+  <button class="btn btn-primary" onclick="setSubtab('checklist')">Go to Checklist →</button>
+  `;
+}
+
+function renderBeforeAfter(task){
+  return `<div class="card"><h3>Before → After</h3>
+  <div class="ba-wrap">
+    <div><span class="ba-label ba-before">Before</span><p>${task.before}</p></div>
+    <div><span class="ba-label ba-after">After</span><p>${task.after}</p></div>
+  </div></div>`;
+}
+
+function renderChecklistTab(task){
+  const saved = getChecklist(task.id);
+  const pct = checklistPct(task);
+  return `
+  <div class="card">
+    <div class="pbar-row"><span>Completion Checklist</span><span>${pct}%</span></div>
+    <div class="pbar-track" style="margin-bottom:14px;"><div class="pbar-fill" style="width:${pct}%"></div></div>
+    ${task.checklist.map((c,i)=>`
+      <div class="check-item ${saved[i]?'checked':''}" onclick="toggleCheck('${task.id}',${i})">
+        <div class="check-box ${saved[i]?'checked':''}">${saved[i]?'✓':''}</div>
+        <span>${c}</span>
+      </div>
+    `).join('')}
+  </div>
+  <button class="btn btn-primary" onclick="setSubtab('tryit')">Try It Yourself →</button>
+  `;
+}
+function toggleCheck(taskId, idx){
+  const saved = getChecklist(taskId);
+  saved[idx] = !saved[idx];
+  setChecklist(taskId, saved);
+  render();
+}
+
+function renderTryIt(task){
+  const t = task.tryIt;
+  if(!t) return `<div class="card">No independent scenario for this task yet.</div>`;
+  const tstate = getTryItState(task.id);
+  return `
+  <div class="card">
+    <div class="eyebrow">TRY IT YOURSELF — no instructions this time</div>
+    <h3>${t.client}</h3>
+    <div class="client-msg-wrap">
+      <div class="avatar">${t.client[0]}</div>
+      <div><div class="client-bubble">${t.request}</div></div>
+    </div>
+    <p class="small-muted" style="margin-top:10px;">Work through this the same way you did the guided version — categorize, prioritize, resolve, and think about how you'd report back. Use hints only if you get stuck.</p>
+    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">
+      ${tstate.hints<1?`<button class="btn btn-outline" onclick="revealHint('${task.id}')">💡 Show Hint 1</button>`:''}
+      ${tstate.hints===1?`<button class="btn btn-outline" onclick="revealHint('${task.id}')">💡 Show Hint 2</button>`:''}
+      ${!tstate.answer?`<button class="btn btn-gold" onclick="revealAnswer('${task.id}')">Show Me the Answer</button>`:''}
+    </div>
+    ${tstate.hints>=1?`<div class="hint-box"><div class="hint-label">Hint 1</div>${t.hints[0]}</div>`:''}
+    ${tstate.hints>=2?`<div class="hint-box"><div class="hint-label">Hint 2</div>${t.hints[1]}</div>`:''}
+    ${tstate.answer?`<div class="why-box" style="margin-top:12px;"><div class="why-label">Full Answer</div>${t.answer}</div>`:''}
+  </div>
+  <button class="btn btn-primary" onclick="setSubtab('wrapup')">Go to Wrap-Up →</button>
+  `;
+}
+function revealHint(taskId){
+  const s = getTryItState(taskId); s.hints = Math.min(2, s.hints+1); setTryItState(taskId, s); render();
+}
+function revealAnswer(taskId){
+  const s = getTryItState(taskId); s.answer = true; setTryItState(taskId, s); render();
+}
+
+function renderWrapup(task){
+  return `
+  <div class="card">
+    <h3>Common Mistakes to Avoid</h3>
+    ${task.mistakes.map(m=>`<div class="mistake-box">${m}</div>`).join('')}
+  </div>
+  ${task.clientUpdate?`<div class="card"><h3>Telling the Client</h3><div class="client-msg-wrap"><div class="avatar">Y</div><div><div class="client-bubble" style="background:var(--green-bg);">${task.clientUpdate}</div><div class="platform-tag">Your reply</div></div></div></div>`:''}
+  <div class="card" style="background:var(--primary-d); color:#fff;">
+    <div class="eyebrow" style="background:var(--gold); color:var(--primary-d);">REMEMBER THIS</div>
+    <ul style="margin-top:8px;">
+      ${task.missionNotes.map(n=>`<li style="margin-bottom:6px;">${n}</li>`).join('')}
+    </ul>
+  </div>
+  <button class="btn btn-primary" onclick="go('tasks')">← Back to Task Library</button>
+  `;
+}
+
+/* ============================= RENDER: TOOL MAP ============================= */
+function renderTools(){
+  return `
+  <div class="eyebrow">Tool Map</div>
+  <h1>Learn tools in the right order</h1>
+  <p class="small-muted" style="max-width:620px;">Don't try to learn everything at once. Each group is ranked so you build competence in the tools clients actually use first.</p>
+  ${TOOL_MAP.map(g=>`
+    <div class="card">
+      <h3>${g.group}</h3>
+      <div class="grid grid-2">
+      ${g.tools.map(t=>`<div class="tool-card">
+        <div style="flex:1;">
+          <div style="display:flex; justify-content:space-between; align-items:center;"><b>${t.name}</b><span class="badge ${TIER_COLOR[t.tier]}">${TIER_LABEL[t.tier]}</span></div>
+          <div class="tool-why">${t.why}</div>
+        </div>
+      </div>`).join('')}
+      </div>
+    </div>
+  `).join('')}
+  `;
+}
+
+/* ============================= RENDER: CHEAT SHEETS ============================= */
+function renderCheatSheets(){
+  return `
+  <div class="eyebrow">Cheat Sheets</div>
+  <h1>Quick reference, when you need it fast</h1>
+  <div class="grid grid-2">
+  ${CHEAT_SHEETS.map(c=>`
+    <div class="card">
+      <h3>${c.icon} ${c.title}</h3>
+      <ul style="padding-left:18px; font-size:.88rem;">
+        ${c.points.map(p=>`<li style="margin-bottom:6px;">${p}</li>`).join('')}
+      </ul>
+    </div>
+  `).join('')}
+  </div>
+  `;
+}
+
+/* ============================= RENDER: CORPORATE MAP ============================= */
+function renderMapping(){
+  return `
+  <div class="eyebrow">Your Experience → VA</div>
+  <h1>Your SAP SD background, translated</h1>
+  <p class="small-muted" style="max-width:640px;">You're not starting from zero. Five years in SAP SD support and Order-to-Cash already built real VA-relevant skill — here's the direct translation.</p>
+  ${CORP_MAP.map(m=>`
+    <div class="card">
+      <div class="workflow">
+        <div class="wf-node" style="background:var(--sage-d); color:var(--primary-d);">${m.from}</div>
+        <span class="wf-arrow">→</span>
+        <div class="wf-node">${m.to}</div>
+      </div>
+    </div>
+  `).join('')}
+  `;
+}
+
+/* ============================= RENDER: DECISIONS ============================= */
+function renderDecisions(){
+  return `
+  <div class="eyebrow">What Would You Do?</div>
+  <h1>Fast judgment calls, real stakes</h1>
+  <div class="grid grid-2">
+  ${DECISIONS.map(d=>renderDecisionCard(d)).join('')}
+  </div>
+  `;
+}
+function renderDecisionCard(d){
+  const picked = LS.get('decision_'+d.id, null);
+  return `<div class="card">
+    <p><b>Scenario:</b> ${d.prompt}</p>
+    ${d.options.map(o=>{
+      const isPicked = picked===o.id;
+      const isCorrect = o.id===d.correct;
+      let style = '';
+      if(picked){
+        if(isCorrect) style = 'border-color:var(--primary); background:var(--green-bg);';
+        else if(isPicked) style = 'border-color:var(--red); background:var(--red-bg);';
+      }
+      return `<button class="btn btn-outline" style="display:block; width:100%; text-align:left; margin-bottom:8px; ${style}" onclick="pickDecision('${d.id}','${o.id}')">${o.text}</button>`;
+    }).join('')}
+    ${picked?`<div class="why-box"><div class="why-label">Why</div>${d.explanation}</div>`:''}
+  </div>`;
+}
+function pickDecision(id, opt){ LS.set('decision_'+id, opt); render(); }
+
+/* ============================= MASTER RENDER ============================= */
+function render(){
+  renderNav();
+  const main = document.getElementById('main');
+  if(state.view==='dashboard') main.innerHTML = renderDashboard();
+  else if(state.view==='tasks') main.innerHTML = renderTasks();
+  else if(state.view==='taskDetail') main.innerHTML = renderTaskDetail(TASKS.find(t=>t.id===state.taskId));
+  else if(state.view==='tools') main.innerHTML = renderTools();
+  else if(state.view==='cheatsheets') main.innerHTML = renderCheatSheets();
+  else if(state.view==='mapping') main.innerHTML = renderMapping();
+  else if(state.view==='decisions') main.innerHTML = renderDecisions();
+}
+render();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {
+      // Offline caching just won't be available this session — the app still works fully online.
+    });
+  });
+}
+</script>
+</body>
+</html>
