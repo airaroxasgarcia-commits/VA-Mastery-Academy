@@ -1706,8 +1706,8 @@ render();
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch(() => {
-      // Offline caching just won't be available this session — the app still works fully online.
+    navigator.serviceWorker.register('sw.js').catch((err) => {
+      console.warn('Service worker registration failed — the app still works fully online:', err);
     });
   });
 }

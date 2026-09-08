@@ -14,7 +14,16 @@ const APP_SHELL = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_VERSION)
-      .then((cache) => cache.addAll(APP_SHELL))
+      .then((cache) =>
+        Promise.all(
+          APP_SHELL.map((url) =>
+            cache.add(url).catch((err) => {
+              // Don't let one missing/misnamed file break installability for everything else.
+              console.warn('sw: could not cache', url, err);
+            })
+          )
+        )
+      )
       .then(() => self.skipWaiting())
   );
 });
