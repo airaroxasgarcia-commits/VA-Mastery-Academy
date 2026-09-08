@@ -215,6 +215,43 @@ button{font-family:inherit; cursor:pointer;}
 }
 .overlay{display:none;}
 .overlay.show{display:block; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:45;}
+
+/* ROADMAP TIMELINE */
+.rm-track{position:relative; padding-left:34px;}
+.rm-track::before{content:''; position:absolute; left:13px; top:6px; bottom:6px; width:2px; background:var(--border);}
+.rm-day{position:relative; margin-bottom:12px;}
+.rm-dot{position:absolute; left:-34px; top:16px; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:.8rem; font-weight:700; border:2px solid var(--border); background:#fff; z-index:1;}
+.rm-dot.complete{background:var(--primary); border-color:var(--primary); color:#fff;}
+.rm-dot.current{background:var(--gold); border-color:var(--gold); color:var(--primary-d);}
+.rm-dot.locked{background:#eee; color:#aaa;}
+.rm-card{display:flex; justify-content:space-between; align-items:center; gap:10px; padding:14px 18px;}
+.rm-card.locked{opacity:.55;}
+.rm-card.clickable{cursor:pointer;}
+.rm-card.clickable:hover{box-shadow:0 4px 10px rgba(37,42,39,.1);}
+.rm-status{font-size:.72rem; font-weight:700; padding:3px 10px; border-radius:20px; white-space:nowrap;}
+.rm-status-complete{background:var(--green-bg); color:var(--primary-d);}
+.rm-status-current{background:var(--gold); color:var(--primary-d);}
+.rm-status-locked{background:#eee; color:#999;}
+
+/* INTERVIEW CARD */
+.interview-flow{display:flex; flex-direction:column; gap:0;}
+.iv-block{background:var(--cream); border-left:4px solid var(--blue); border-radius:0 8px 8px 0; padding:12px 16px; margin-bottom:10px;}
+.iv-label{font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--blue); margin-bottom:3px;}
+.iv-strong{border-left-color:var(--primary); background:var(--green-bg);}
+.iv-strong .iv-label{color:var(--primary-d);}
+.iv-mistake{border-left-color:var(--red); background:var(--red-bg);}
+.iv-mistake .iv-label{color:var(--red);}
+.iv-better{border-left-color:var(--gold); background:var(--orange-bg);}
+.iv-better .iv-label{color:var(--orange);}
+
+/* QUIZ */
+.quiz-opt{display:block; width:100%; text-align:left; padding:9px 12px; border-radius:8px; border:1.5px solid var(--border); background:#fff; margin-bottom:6px; font-size:.87rem;}
+.quiz-opt.correct{border-color:var(--primary); background:var(--green-bg);}
+.quiz-opt.wrong{border-color:var(--red); background:var(--red-bg);}
+
+/* DAY SECTION LABELS */
+.day-section-label{display:flex; align-items:center; gap:8px; font-family:'Spectral',serif; font-weight:700; font-size:1.05rem; color:var(--primary-d); margin-bottom:8px;}
+.day-section-num{width:26px;height:26px;border-radius:7px; background:var(--primary-d); color:#fff; display:flex; align-items:center; justify-content:center; font-size:.8rem; font-family:'Work Sans',sans-serif; flex-shrink:0;}
 </style>
 </head>
 <body>
@@ -246,14 +283,21 @@ const LS = {
   get(key, fallback){ try{ const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }catch(e){ return fallback; } },
   set(key, val){ try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){} }
 };
-let state = { view:'dashboard', taskId:null, subtab:'brief' };
+let state = { view:'dashboard', taskId:null, subtab:'brief', dayNum:null };
 
 function toggleSidebar(){
   document.getElementById('sidebar').classList.toggle('open');
   document.getElementById('overlay').classList.toggle('show');
 }
-function go(view, taskId){
-  state.view = view; state.taskId = taskId || null; state.subtab='brief';
+function go(view, taskId, subtab){
+  state.view = view; state.taskId = taskId || null; state.subtab = subtab || 'brief'; state.dayNum = null;
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+  window.scrollTo(0,0);
+  render();
+}
+function goDay(dayNum){
+  state.view = 'dayDetail'; state.dayNum = dayNum; state.taskId = null;
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('overlay').classList.remove('show');
   window.scrollTo(0,0);
@@ -265,13 +309,13 @@ const TOOL_MAP = [
   {group:'Communication', tools:[
     {name:'Gmail', tier:'first', why:'Nearly every client runs on Gmail or Google Workspace — this is your day-one tool.'},
     {name:'Slack', tier:'first', why:'The default for quick client and team check-ins.'},
-    {name:'Zoom', tier:'first', why:'Used for calls and meetings you\\'ll often help schedule.'},
+    {name:'Zoom', tier:'first', why:'Used for calls and meetings you\'ll often help schedule.'},
     {name:'Outlook', tier:'next', why:'Common with corporate clients running Microsoft 365.'},
-    {name:'Microsoft Teams', tier:'next', why:'Outlook\\'s equivalent to Slack — good to recognize, not urgent to master.'},
+    {name:'Microsoft Teams', tier:'next', why:'Outlook\'s equivalent to Slack — good to recognize, not urgent to master.'},
   ]},
   {group:'Productivity', tools:[
     {name:'Google Workspace (Docs/Sheets/Drive)', tier:'first', why:'The backbone of most VA deliverables — docs, trackers, shared files.'},
-    {name:'Microsoft 365 (Word/Excel)', tier:'next', why:'Same skills as Google Workspace, different interface — learn once you\\'re comfortable with Sheets.'},
+    {name:'Microsoft 365 (Word/Excel)', tier:'next', why:'Same skills as Google Workspace, different interface — learn once you\'re comfortable with Sheets.'},
   ]},
   {group:'Project Management', tools:[
     {name:'Trello', tier:'first', why:'Simplest board tool — the easiest place to learn project management logic.'},
@@ -285,8 +329,8 @@ const TOOL_MAP = [
     {name:'Salesforce', tier:'master', why:'Enterprise-grade and complex — learn the fundamentals of CRM logic first elsewhere.'},
   ]},
   {group:'Automation', tools:[
-    {name:'Zapier', tier:'master', why:'A major differentiator once you\\'re comfortable — automates repetitive multi-app tasks.'},
-    {name:'Make', tier:'master', why:'Zapier\\'s more visual, more powerful cousin — for after you\\'ve automated a few workflows in Zapier.'},
+    {name:'Zapier', tier:'master', why:'A major differentiator once you\'re comfortable — automates repetitive multi-app tasks.'},
+    {name:'Make', tier:'master', why:'Zapier\'s more visual, more powerful cousin — for after you\'ve automated a few workflows in Zapier.'},
   ]},
   {group:'Design & Scheduling', tools:[
     {name:'Canva', tier:'next', why:'Frequently requested for social posts, one-pagers, and simple decks.'},
@@ -304,16 +348,16 @@ const TIER_COLOR = {first:'badge-beginner', next:'badge-intermediate', master:'b
 const CORP_MAP = [
   {from:'Handling 60–90 SAP SD support tickets a month', to:'High-volume inbox & task triage — sorting many incoming items fast without dropping anything'},
   {from:'Working inside a formal ITSM system (ServiceNow / SAP Solution Manager)', to:'Comfort learning any structured tool: CRMs, project boards, ticketing systems'},
-  {from:'Mentoring ~10 junior colleagues', to:'Writing clear SOPs and how-to documentation a client\\'s team can actually follow'},
+  {from:'Mentoring ~10 junior colleagues', to:'Writing clear SOPs and how-to documentation a client\'s team can actually follow'},
   {from:'Order-to-Cash process ownership', to:'End-to-end operations thinking — seeing a request through from start to finish, not just one step'},
   {from:'Doing SD configuration on service-request tickets', to:'Following a defined process precisely, with an eye for what "done correctly" looks like'},
-  {from:'Coordinating with global stakeholders across time zones (S/4HANA support)', to:'Async-first client communication — clear updates that don\\'t require a live meeting'},
+  {from:'Coordinating with global stakeholders across time zones (S/4HANA support)', to:'Async-first client communication — clear updates that don\'t require a live meeting'},
   {from:'Root-causing recurring incidents', to:'Spotting the real "why" behind a client request instead of just doing the surface task'},
   {from:'Working under SLAs and deadlines', to:'Prioritization instinct — urgent vs. important, and communicating realistic timelines'},
   {from:'Producing configuration and process documentation', to:'Client reporting — turning raw activity into a clean, readable summary'},
   {from:'Being the go-to person for a live production system', to:'Reliability as a trust signal — the trait clients pay a premium for in a VA'},
   {from:'Working across ECC and S/4HANA versions', to:'Comfort being a fast learner on unfamiliar software — a core VA skill'},
-  {from:'Managing multiple concurrent tickets with different priorities', to:'Multitasking across a CEO\\'s inbox, calendar, and task list in the same morning'},
+  {from:'Managing multiple concurrent tickets with different priorities', to:'Multitasking across a CEO\'s inbox, calendar, and task list in the same morning'},
 ];
 
 /* ============================= DATA: CHEAT SHEETS ============================= */
@@ -321,25 +365,25 @@ const CHEAT_SHEETS = [
   {title:'Email Management', icon:'📧', points:[
     '🔴 Urgent — client-facing, time-critical, or from someone senior',
     '🟠 Action Required — needs a reply or task, no fixed deadline',
-    '🟡 Waiting/Follow-up — you\\'re blocked on someone else\\'s reply',
+    '🟡 Waiting/Follow-up — you\'re blocked on someone else\'s reply',
     '🟢 Informational — no action needed, just context',
     '🔵 Reference — save for later (contracts, receipts, credentials)',
     '⚪ Newsletter — archive or unsubscribe',
-    'Rule of thumb: touch each email once — decide, don\\'t re-read.'
+    'Rule of thumb: touch each email once — decide, don\'t re-read.'
   ]},
   {title:'Calendar Management', icon:'📅', points:[
     'Fixed commitments (client calls, board meetings) move last — everything else moves around them',
     'Always add 10–15 min buffers around back-to-back meetings',
     'Confirm time zone explicitly — never assume',
     'When rescheduling, offer 2–3 alternative slots, not just "when works?"',
-    'Flag true conflicts to the client — don\\'t silently choose for them if both meetings matter'
+    'Flag true conflicts to the client — don\'t silently choose for them if both meetings matter'
   ]},
   {title:'Prioritization (Eisenhower)', icon:'🎯', points:[
     'Urgent + Important → Do Now',
     'Important, not Urgent → Schedule it (this is where good VAs create the most value)',
     'Urgent, not Important → Delegate if possible',
     'Neither → Archive/ignore',
-    'If everything feels urgent, that\\'s a sign to clarify with the client, not to freeze'
+    'If everything feels urgent, that\'s a sign to clarify with the client, not to freeze'
   ]},
   {title:'SOP Writing', icon:'📝', points:[
     'Purpose — why this process exists',
@@ -353,14 +397,14 @@ const CHEAT_SHEETS = [
   {title:'Client Communication', icon:'💬', points:[
     'Lead with the outcome, not the process ("Inbox is sorted — 2 things need you today")',
     'Never leave a request acknowledged-but-silent for more than a day',
-    'When you\\'re unsure of scope, ask one specific clarifying question — don\\'t guess',
+    'When you\'re unsure of scope, ask one specific clarifying question — don\'t guess',
     'Bad news: state it plainly, then immediately offer the next step',
     'Close every update loop — even "nothing needed from you" is worth saying'
   ]},
   {title:'Daily VA Checklist', icon:'✅', points:[
     'Start: check messages → check calendar → review deadlines → plan priorities',
     'During: update tasks as you go, communicate blockers immediately',
-    'End: review what\\'s done vs. pending → send a short client update → set tomorrow\\'s top 3'
+    'End: review what\'s done vs. pending → send a short client update → set tomorrow\'s top 3'
   ]},
 ];
 
@@ -371,28 +415,28 @@ const DECISIONS = [
     prompt:'A client messages: "Can you quickly update this spreadsheet?" You open it — it has 500 rows, and the client says they need it back in 20 minutes.',
     options:[
       {id:'a', text:'Say yes immediately and start working as fast as possible.'},
-      {id:'b', text:'Reply that you can\\'t do it and leave it there.'},
+      {id:'b', text:'Reply that you can\'t do it and leave it there.'},
       {id:'c', text:'Ask exactly what needs to change and confirm the real deadline before starting.'},
-      {id:'d', text:'Do a partial update and hope it\\'s good enough.'}
+      {id:'d', text:'Do a partial update and hope it\'s good enough.'}
     ],
     correct:'c',
     explanation:'A 500-row sheet almost never needs every row touched — "update" usually means something specific. Clarifying scope in one short message (30 seconds) protects you from redoing work and protects the client from getting the wrong thing back in 20 minutes. Saying yes blindly (A) risks a rushed, wrong result; refusing (B) is unhelpful when a scoped version of the task is probably very doable; guessing (D) is how trust gets lost.'
   },
   {
     id:'d2',
-    prompt:'You\\'re mid-way through organizing an inbox when the client Slacks: "Also — can you jump on a call in 5 minutes to fill in for me?" You\\'re not prepared and don\\'t know the topic.',
+    prompt:'You\'re mid-way through organizing an inbox when the client Slacks: "Also — can you jump on a call in 5 minutes to fill in for me?" You\'re not prepared and don\'t know the topic.',
     options:[
       {id:'a', text:'Say yes and hope you can figure it out live.'},
       {id:'b', text:'Ignore the message until you finish the inbox.'},
-      {id:'c', text:'Reply immediately, explain you\\'re not briefed on the topic, and ask what they need you to cover or represent.'},
+      {id:'c', text:'Reply immediately, explain you\'re not briefed on the topic, and ask what they need you to cover or represent.'},
       {id:'d', text:'Decline without explanation.'}
     ],
     correct:'c',
-    explanation:'Speed of response matters more than the inbox task right now — a same-minute reply keeps the client from being blindsided. Being honest about not being briefed, while offering to help however you can, protects both your credibility and the client\\'s meeting outcome.'
+    explanation:'Speed of response matters more than the inbox task right now — a same-minute reply keeps the client from being blindsided. Being honest about not being briefed, while offering to help however you can, protects both your credibility and the client\'s meeting outcome.'
   },
   {
     id:'d3',
-    prompt:'Two meetings on the CEO\\'s calendar overlap by 30 minutes. One is a recurring internal team sync; the other is a first call with a potential investor, added yesterday.',
+    prompt:'Two meetings on the CEO\'s calendar overlap by 30 minutes. One is a recurring internal team sync; the other is a first call with a potential investor, added yesterday.',
     options:[
       {id:'a', text:'Move the investor call — it was added more recently.'},
       {id:'b', text:'Move the recurring internal sync and notify the team, then flag the change to the CEO.'},
@@ -400,7 +444,7 @@ const DECISIONS = [
       {id:'d', text:'Cancel the internal sync entirely without telling anyone.'}
     ],
     correct:'b',
-    explanation:'Weigh importance, not recency. An investor call is high-stakes and hard to reschedule gracefully; a recurring internal sync is lower-stakes and easier to move. Moving it, informing the team, and flagging the change (not silently deciding and disappearing) keeps everyone informed — that\\'s the job.'
+    explanation:'Weigh importance, not recency. An investor call is high-stakes and hard to reschedule gracefully; a recurring internal sync is lower-stakes and easier to move. Moving it, informing the team, and flagging the change (not silently deciding and disappearing) keeps everyone informed — that\'s the job.'
   }
 ];
 
@@ -408,18 +452,18 @@ const DECISIONS = [
 const TASKS = [
 {
   id:'email-cleanup', client:'Marcus Webb — Founder, Northline Studio', difficulty:'Beginner', time:'30–45 min',
-  tools:[{icon:'📧',name:'Gmail',why:'This is where the mess lives — you\\'ll triage directly in the inbox.'},{icon:'📊',name:'Google Sheets',why:'To hand the client a clean written summary they can scan in 10 seconds.'}],
+  tools:[{icon:'📧',name:'Gmail',why:'This is where the mess lives — you\'ll triage directly in the inbox.'},{icon:'📊',name:'Google Sheets',why:'To hand the client a clean written summary they can scan in 10 seconds.'}],
   skills:['Email Management','Prioritization','Client Communication'],
   platform:'Slack DM',
-  request:'Hey! I\\'m drowning — I think I have around 120 unread emails after two weeks of back-to-back client pitches. Can you go through my inbox, organize everything, and tell me what actually needs my attention today? I don\\'t want to miss anything from a client or make someone feel ignored.',
+  request:'Hey! I\'m drowning — I think I have around 120 unread emails after two weeks of back-to-back client pitches. Can you go through my inbox, organize everything, and tell me what actually needs my attention today? I don\'t want to miss anything from a client or make someone feel ignored.',
   missionGoal:'Turn a chaotic, unread-heavy inbox into a clearly labeled, prioritized set of categories — and tell Marcus exactly what needs him today.',
   missionNotes:['You are NOT simply making the unread count zero.','You must review every message, categorize it, spot anything time-sensitive, and flag what genuinely needs his attention.','A "clean" inbox that buries an angry client email is a failed task.'],
   workflow:['Client Request','Identify Objective','Identify Deadline','Identify Priority','Choose Tool','Perform Task'],
   steps:[
-    {title:'Understand the Request', body:'Marcus didn\\'t ask for "zero unread" — he asked for two things: organization, and a heads-up on what\\'s urgent. Before touching anything, restate the job to yourself: sort everything into categories, and surface anything client-facing or deadline-driven.', why:'If you start clicking before you know the actual goal, you\\'ll optimize for the wrong thing — like archiving fast instead of reading carefully.'},
-    {title:'Open Gmail and Get Oriented', mock:'gmail-start', body:'Open the inbox and sort by unread first. Don\\'t start replying yet — do one full pass just reading sender + subject line for every message, so you have the full picture before you categorize anything.', why:'Seeing the whole inbox first stops you from making a snap judgment on message #3 that you\\'d reverse by message #40.'},
+    {title:'Understand the Request', body:'Marcus didn\'t ask for "zero unread" — he asked for two things: organization, and a heads-up on what\'s urgent. Before touching anything, restate the job to yourself: sort everything into categories, and surface anything client-facing or deadline-driven.', why:'If you start clicking before you know the actual goal, you\'ll optimize for the wrong thing — like archiving fast instead of reading carefully.'},
+    {title:'Open Gmail and Get Oriented', mock:'gmail-start', body:'Open the inbox and sort by unread first. Don\'t start replying yet — do one full pass just reading sender + subject line for every message, so you have the full picture before you categorize anything.', why:'Seeing the whole inbox first stops you from making a snap judgment on message #3 that you\'d reverse by message #40.'},
     {title:'Categorize Every Message', body:'For each email, ask: does this need action, and if so, how fast? Apply one of six labels as you go: Urgent, Action Required, Waiting/Follow-up, Informational, Reference, Newsletter.', why:'Categorizing (not deleting) is what lets Marcus trust that nothing was missed — he can always look at any category later.'},
-    {title:'Flag and Archive', body:'Star or flag anything Urgent or Action Required so it\\'s visible at a glance. Archive purely informational and newsletter items that need no further action — archiving isn\\'t deleting, it\\'s getting it out of the active view.', why:'A CEO opening their inbox should see 5–10 things that matter, not 120 things of mixed importance.'}
+    {title:'Flag and Archive', body:'Star or flag anything Urgent or Action Required so it\'s visible at a glance. Archive purely informational and newsletter items that need no further action — archiving isn\'t deleting, it\'s getting it out of the active view.', why:'A CEO opening their inbox should see 5–10 things that matter, not 120 things of mixed importance.'}
   ],
   categorize:{
     emails:[
@@ -428,9 +472,9 @@ const TASKS = [
       {id:3, from:'David — Atlas Retail (client)', subject:'Can we push our kickoff to Thursday?', date:'Today, 7:40am', correct:'action'},
       {id:4, from:'LinkedIn', subject:'5 people viewed your profile this week', date:'Yesterday, 6:00pm', correct:'newsletter'},
       {id:5, from:'Priya — Design Lead', subject:'Waiting on your logo feedback before we proceed', date:'Yesterday, 3:20pm', correct:'waiting'},
-      {id:6, from:'Angry Customer via Web Form', subject:'This is the third time I\\'m emailing about my refund', date:'Today, 6:55am', correct:'urgent'},
+      {id:6, from:'Angry Customer via Web Form', subject:'This is the third time I\'m emailing about my refund', date:'Today, 6:55am', correct:'urgent'},
       {id:7, from:'AWS Billing', subject:'Your invoice for August is ready', date:'2 days ago', correct:'reference'},
-      {id:8, from:'James — Freelance Copywriter', subject:'Here\\'s the draft you asked for, no rush', date:'Yesterday, 11am', correct:'action'},
+      {id:8, from:'James — Freelance Copywriter', subject:'Here\'s the draft you asked for, no rush', date:'Yesterday, 11am', correct:'action'},
       {id:9, from:'Industry Weekly', subject:'This week in creative agencies', date:'3 days ago', correct:'newsletter'},
       {id:10, from:'Bank of the Philippines', subject:'Your monthly statement is available', date:'3 days ago', correct:'reference'},
       {id:11, from:'Elena — Prospective Client', subject:'Loved the proposal — one question before we sign', date:'Today, 8:50am', correct:'urgent'},
@@ -440,11 +484,11 @@ const TASKS = [
       {id:15, from:'Canva', subject:'New templates just for you', date:'4 days ago', correct:'newsletter'},
     ],
     catInfo:{
-      urgent:{label:'🔴 Urgent', cls:'cat-urgent', explain:'Client-facing, time-boxed, or reputationally risky — this needs Marcus\\'s eyes today, no exceptions.'},
-      action:{label:'🟠 Action Required', cls:'cat-action', explain:'Needs a response or decision, but isn\\'t on a strict clock — can be batched into "today\\'s work."'},
-      waiting:{label:'🟡 Waiting/Follow-up', cls:'cat-waiting', explain:'Someone is blocked on Marcus — flag it so it doesn\\'t silently age into an "urgent" next week.'},
+      urgent:{label:'🔴 Urgent', cls:'cat-urgent', explain:'Client-facing, time-boxed, or reputationally risky — this needs Marcus\'s eyes today, no exceptions.'},
+      action:{label:'🟠 Action Required', cls:'cat-action', explain:'Needs a response or decision, but isn\'t on a strict clock — can be batched into "today\'s work."'},
+      waiting:{label:'🟡 Waiting/Follow-up', cls:'cat-waiting', explain:'Someone is blocked on Marcus — flag it so it doesn\'t silently age into an "urgent" next week.'},
       info:{label:'🟢 Informational', cls:'cat-info', explain:'No action needed — good to archive once skimmed.'},
-      reference:{label:'🔵 Reference', cls:'cat-reference', explain:'Worth keeping searchable, but not part of today\\'s triage.'},
+      reference:{label:'🔵 Reference', cls:'cat-reference', explain:'Worth keeping searchable, but not part of today\'s triage.'},
       newsletter:{label:'⚪ Newsletter', cls:'cat-newsletter', explain:'Safe to archive immediately — this is inbox noise.'}
     }
   },
@@ -462,33 +506,33 @@ const TASKS = [
   tryIt:{
     prompt:'New client, same job, no instructions this time.',
     client:'Renata Alva — Managing Partner, Alva & Cole Law',
-    request:'I was at a conference all week and my inbox is a disaster. Can you sort it out and let me know what can\\'t wait?',
+    request:'I was at a conference all week and my inbox is a disaster. Can you sort it out and let me know what can\'t wait?',
     hints:[
-      'Start by scanning every subject line once before categorizing anything — don\\'t react to the first urgent-looking one and lose the big picture.',
-      'A law firm inbox will have a lot of "reference" material (filings, invoices) — don\\'t let it clutter your urgent/action categories.'
+      'Start by scanning every subject line once before categorizing anything — don\'t react to the first urgent-looking one and lose the big picture.',
+      'A law firm inbox will have a lot of "reference" material (filings, invoices) — don\'t let it clutter your urgent/action categories.'
     ],
     answer:'Apply the same six categories. Anything from a court, opposing counsel, or a client with a deadline goes Urgent. Internal scheduling and vendor requests go Action Required. Anything where Renata is waiting on someone else goes Waiting/Follow-up. Filings and invoices go Reference. Firm newsletters and bar association updates go Newsletter or Informational. Finish with a 3–5 line summary: counts per category, plus the 2–3 items she should personally look at today.'
   },
   mistakes:[
     'Deleting instead of archiving — clients often want to find something later; archiving preserves it, deleting destroys it.',
     'Marking too many things "Urgent" — if 40 emails are urgent, nothing is. Be selective.',
-    'Replying to emails on the client\\'s behalf without being asked to — your job here was triage, not correspondence, unless explicitly told otherwise.',
+    'Replying to emails on the client\'s behalf without being asked to — your job here was triage, not correspondence, unless explicitly told otherwise.',
     'Sending the client a wall of text instead of a short, scannable summary.'
   ],
-  clientUpdate:'Hi Marcus — inbox is sorted. 3 things need you today (flagged ⭐): the contract from Sandra due 5pm, the refund complaint that\\'s now on its third email, and a quick question from Elena before she signs. Everything else is labeled by category so you can dig in anytime. Let me know if you\\'d like me to draft replies to any of the three.'
+  clientUpdate:'Hi Marcus — inbox is sorted. 3 things need you today (flagged ⭐): the contract from Sandra due 5pm, the refund complaint that\'s now on its third email, and a quick question from Elena before she signs. Everything else is labeled by category so you can dig in anytime. Let me know if you\'d like me to draft replies to any of the three.'
 },
 {
   id:'calendar-travel', client:'Elena Cho — CEO, Cho & Rivers Consulting', difficulty:'Intermediate', time:'45–60 min',
-  tools:[{icon:'📅',name:'Google Calendar',why:'You\\'ll be moving, confirming, and buffering meetings directly here.'},{icon:'💬',name:'Slack/Email',why:'To notify affected attendees and confirm the final schedule with Elena.'}],
+  tools:[{icon:'📅',name:'Google Calendar',why:'You\'ll be moving, confirming, and buffering meetings directly here.'},{icon:'💬',name:'Slack/Email',why:'To notify affected attendees and confirm the final schedule with Elena.'}],
   skills:['Calendar Management','Prioritization','Time Zone Coordination'],
   platform:'Email',
-  request:'I\\'ll be traveling to our Singapore office next week (Mon–Wed, GMT+8 while I\\'m there). Please look at my calendar, sort out anything that conflicts with the trip, and make sure my important meetings are still covered — I can\\'t miss the board update or the client renewal call.',
-  missionGoal:'Reconcile Elena\\'s existing calendar against her travel window, resolve every conflict, and confirm a final schedule she can trust without double-checking it herself.',
+  request:'I\'ll be traveling to our Singapore office next week (Mon–Wed, GMT+8 while I\'m there). Please look at my calendar, sort out anything that conflicts with the trip, and make sure my important meetings are still covered — I can\'t miss the board update or the client renewal call.',
+  missionGoal:'Reconcile Elena\'s existing calendar against her travel window, resolve every conflict, and confirm a final schedule she can trust without double-checking it herself.',
   missionNotes:['Not every meeting is equally important — the board update and client renewal call are non-negotiable.','Time zone math has to be exact — GMT+8 vs her home time zone GMT+0 is an 8-hour gap.','Silently moving something without telling the attendee is a mistake, even if the new time is objectively fine.'],
   workflow:['Review Calendar','Identify Conflicts','Check Priorities','Check Time Zones','Find Available Slots','Reschedule','Add Buffers','Confirm with Client'],
   steps:[
-    {title:'Review the Existing Calendar', mock:'calendar-start', body:'Look at every meeting scheduled Mon–Wed and note which are fixed (external, hard to move) versus flexible (internal, easy to shift).', why:'You can\\'t prioritize what you haven\\'t fully mapped out first.'},
-    {title:'Overlay the Travel Window', body:'Elena will be on GMT+8 for the trip, not her usual GMT+0. Convert every meeting time and flag anything that now falls at an unreasonable hour (e.g., a "9am her time" call becomes 5pm in Singapore — check if that\\'s workable).', why:'A meeting that "still fits" on the calendar grid can be unworkable once you check what time it actually is for a jet-lagged CEO.'},
+    {title:'Review the Existing Calendar', mock:'calendar-start', body:'Look at every meeting scheduled Mon–Wed and note which are fixed (external, hard to move) versus flexible (internal, easy to shift).', why:'You can\'t prioritize what you haven\'t fully mapped out first.'},
+    {title:'Overlay the Travel Window', body:'Elena will be on GMT+8 for the trip, not her usual GMT+0. Convert every meeting time and flag anything that now falls at an unreasonable hour (e.g., a "9am her time" call becomes 5pm in Singapore — check if that\'s workable).', why:'A meeting that "still fits" on the calendar grid can be unworkable once you check what time it actually is for a jet-lagged CEO.'},
     {title:'Resolve Each Conflict', body:'For each conflict: if one meeting is clearly higher priority (board update, client renewal), keep it fixed and move the other. Add a 15-minute travel/transition buffer around anything right after a flight or immediately before a critical call.', why:'Protecting the two non-negotiable meetings is the actual success criterion here — everything else is negotiable around them.'},
     {title:'Notify and Confirm', body:'Send a short note to anyone whose meeting moved, and send Elena the final reconciled schedule for a quick confirmation before you consider it done.', why:'A rescheduled meeting nobody was told about is a bigger problem than the original conflict.'}
   ],
@@ -526,10 +570,10 @@ const TASKS = [
   tryIt:{
     prompt:'A new travel scenario, no instructions this time.',
     client:'Raj Patel — VP Sales, Northbeam SaaS',
-    request:'I\\'m flying to our Berlin office Wed–Fri (CET, which is 7 hours ahead of my usual Pacific time). Can you make sure nothing falls through the cracks — especially my Friday pipeline review with the investors.',
+    request:'I\'m flying to our Berlin office Wed–Fri (CET, which is 7 hours ahead of my usual Pacific time). Can you make sure nothing falls through the cracks — especially my Friday pipeline review with the investors.',
     hints:[
-      'A 7-hour gap means a meeting that\\'s fine at 8am Pacific could land in the middle of Raj\\'s Berlin night — check every single time.',
-      'Treat the Friday investor pipeline review the same way you treated Elena\\'s board update: it moves nothing else, everything else moves around it.'
+      'A 7-hour gap means a meeting that\'s fine at 8am Pacific could land in the middle of Raj\'s Berlin night — check every single time.',
+      'Treat the Friday investor pipeline review the same way you treated Elena\'s board update: it moves nothing else, everything else moves around it.'
     ],
     answer:'Map all Wed–Fri meetings, convert each to CET, and flag any that land outside reasonable Berlin waking hours (roughly 7am–8pm CET). Keep the Friday investor review fixed and build the rest of Friday around it with buffers. Move flexible internal meetings to before the trip or the following week, and confirm the final Wed–Fri schedule with Raj before calling it done.'
   },
@@ -546,30 +590,30 @@ const TASKS = [
   tools:[{icon:'🎯',name:'Priority Matrix (Eisenhower)',why:'The single most useful mental model for deciding what to do first as a VA juggling multiple clients.'}],
   skills:['Prioritization','Time Management','Decision Making'],
   platform:'Internal Practice',
-  request:'It\\'s 8:30am. Fifteen things have landed on your plate across two clients this morning. Nothing is labeled by priority for you — that\\'s your job to figure out.',
+  request:'It\'s 8:30am. Fifteen things have landed on your plate across two clients this morning. Nothing is labeled by priority for you — that\'s your job to figure out.',
   missionGoal:'Sort every task into the correct quadrant of the Urgent/Important matrix, and understand *why* — not just where it lands, but what to actually do about each quadrant.',
-  missionNotes:['"Urgent" means time-sensitive. "Important" means high-consequence if not done well.','These are not the same thing — a lot of VA training fails learners right here.','The goal isn\\'t a perfect sort on the first try. It\\'s building the instinct.'],
+  missionNotes:['"Urgent" means time-sensitive. "Important" means high-consequence if not done well.','These are not the same thing — a lot of VA training fails learners right here.','The goal isn\'t a perfect sort on the first try. It\'s building the instinct.'],
   workflow:['List All Tasks','Ask: Is it Urgent?','Ask: Is it Important?','Place in Quadrant','Decide Action per Quadrant'],
   steps:[
-    {title:'Separate Urgent from Important', body:'Urgent = has a clock on it. Important = affects the client\\'s business or trust if done poorly or missed. A task can be one, both, or neither.', why:'Confusing these two is why new VAs (and new employees generally) spend all day on loud-but-low-value requests.'},
-    {title:'Place Each Task', mock:'matrix', body:'Urgent+Important → Do Now. Important, not Urgent → Schedule a specific time for it (don\\'t let it slide forever). Urgent, not Important → Delegate or handle quickly without overinvesting. Neither → Archive or decline.', why:'The "Important, not Urgent" quadrant is where the best VAs create the most long-term value — it\\'s also the easiest quadrant to accidentally neglect.'},
-    {title:'Build Today\\'s Actual Order', body:'Once sorted, sequence your morning: Do Now items first (in the order their deadlines demand), then a scheduled block for Important/not-Urgent work, then quick handling of the Delegate pile.', why:'A matrix that never turns into an ordered task list hasn\\'t actually helped you get through the day.'}
+    {title:'Separate Urgent from Important', body:'Urgent = has a clock on it. Important = affects the client\'s business or trust if done poorly or missed. A task can be one, both, or neither.', why:'Confusing these two is why new VAs (and new employees generally) spend all day on loud-but-low-value requests.'},
+    {title:'Place Each Task', mock:'matrix', body:'Urgent+Important → Do Now. Important, not Urgent → Schedule a specific time for it (don\'t let it slide forever). Urgent, not Important → Delegate or handle quickly without overinvesting. Neither → Archive or decline.', why:'The "Important, not Urgent" quadrant is where the best VAs create the most long-term value — it\'s also the easiest quadrant to accidentally neglect.'},
+    {title:'Build Today\'s Actual Order', body:'Once sorted, sequence your morning: Do Now items first (in the order their deadlines demand), then a scheduled block for Important/not-Urgent work, then quick handling of the Delegate pile.', why:'A matrix that never turns into an ordered task list hasn\'t actually helped you get through the day.'}
   ],
   priorityTasks:[
-    {id:1, text:'Client\\'s biggest customer just emailed a complaint threatening to cancel', correct:'q1'},
+    {id:1, text:'Client\'s biggest customer just emailed a complaint threatening to cancel', correct:'q1'},
     {id:2, text:'Draft the quarterly content calendar (due in 3 weeks)', correct:'q2'},
     {id:3, text:'Newsletter subscription renewal reminder', correct:'q4'},
     {id:4, text:'CEO needs the board deck reformatted before a call in 40 minutes', correct:'q1'},
     {id:5, text:'Research 5 CRM options for a project starting next month', correct:'q2'},
     {id:6, text:'A vendor is calling to confirm a routine delivery — anyone on the team can take it', correct:'q3'},
     {id:7, text:'Update the SOP for client onboarding (no deadline, but overdue)', correct:'q2'},
-    {id:8, text:'Slack notification from a channel you don\\'t need to monitor', correct:'q4'},
+    {id:8, text:'Slack notification from a channel you don\'t need to monitor', correct:'q4'},
     {id:9, text:'Reply to a same-day meeting-time request from a partner', correct:'q3'},
     {id:10, text:'Payment processor flags a failed transaction affecting live orders', correct:'q1'},
-    {id:11, text:'Plan next quarter\\'s hiring needs with the ops lead', correct:'q2'},
+    {id:11, text:'Plan next quarter\'s hiring needs with the ops lead', correct:'q2'},
     {id:12, text:'A routine weekly report is due today, low visibility if late by a day', correct:'q3'},
     {id:13, text:'An old promotional email in your inbox with no action needed', correct:'q4'},
-    {id:14, text:'Client\\'s biggest investor pitch is tomorrow and slides aren\\'t finalized', correct:'q1'},
+    {id:14, text:'Client\'s biggest investor pitch is tomorrow and slides aren\'t finalized', correct:'q1'},
     {id:15, text:'Set up a recurring process to auto-tag incoming leads (would save hours weekly)', correct:'q2'},
   ],
   quadInfo:{q1:{label:'🔴 Do Now', sub:'Urgent + Important', cls:'mq1'}, q2:{label:'🟠 Schedule', sub:'Important, not Urgent', cls:'mq2'}, q3:{label:'🟡 Delegate', sub:'Urgent, not Important', cls:'mq3'}, q4:{label:'⚪ Archive/Ignore', sub:'Neither', cls:'mq4'}},
@@ -586,9 +630,9 @@ const TASKS = [
     request:'8:30 CEO requests a calendar change. 8:35 a customer complaint arrives. 8:40 the team asks for a report. 8:45 a meeting reminder pings. 8:50 a client asks for a spreadsheet update. Decide: what do you do first, what can wait, what needs clarification, and what needs escalation?',
     hints:[
       'A "reminder" ping (8:45) is rarely actionable on its own — check if it requires anything from you at all before spending time on it.',
-      'The customer complaint and the CEO\\'s calendar change are both plausible Do Now candidates — the tiebreaker is usually: which one has an external, client-facing clock on it?'
+      'The customer complaint and the CEO\'s calendar change are both plausible Do Now candidates — the tiebreaker is usually: which one has an external, client-facing clock on it?'
     ],
-    answer:'Likely order: (1) Customer complaint — check severity immediately, since client-facing issues compound fast if ignored; if serious, this is Do Now. (2) CEO\\'s calendar change — Do Now if it affects an imminent meeting. (3) Client\\'s spreadsheet update — clarify scope/deadline quickly (don\\'t start blind), then schedule. (4) Team\\'s report request — Schedule, unless they stated a same-day deadline. (5) Meeting reminder — usually needs nothing from you beyond showing up; lowest priority of the five.'
+    answer:'Likely order: (1) Customer complaint — check severity immediately, since client-facing issues compound fast if ignored; if serious, this is Do Now. (2) CEO\'s calendar change — Do Now if it affects an imminent meeting. (3) Client\'s spreadsheet update — clarify scope/deadline quickly (don\'t start blind), then schedule. (4) Team\'s report request — Schedule, unless they stated a same-day deadline. (5) Meeting reminder — usually needs nothing from you beyond showing up; lowest priority of the five.'
   },
   mistakes:[
     'Treating everything with a deadline as equally urgent, regardless of actual consequence.',
@@ -602,13 +646,13 @@ const TASKS = [
   tools:[{icon:'📝',name:'Google Docs',why:'SOPs need to be a clean, shareable, living document the whole team can reference.'}],
   skills:['SOP Creation','Process Mapping','Documentation'],
   platform:'Email',
-  request:'Right now, new customers get added to our CRM, then someone emails them, then we schedule a welcome meeting — but it\\'s different every time depending on who\\'s doing it. Can you turn this into an actual SOP the whole team can follow?',
+  request:'Right now, new customers get added to our CRM, then someone emails them, then we schedule a welcome meeting — but it\'s different every time depending on who\'s doing it. Can you turn this into an actual SOP the whole team can follow?',
   missionGoal:'Turn a loosely-described, inconsistent process into a numbered, unambiguous Standard Operating Procedure anyone on the team could follow without guessing.',
-  missionNotes:['A good SOP removes decisions the process shouldn\\'t require, not just lists what "usually" happens.','You have to infer some missing details (who owns it, what tool triggers it) — flag your assumptions rather than hiding them.','The output is a document, not a one-line description — "create an SOP" is not itself a finished deliverable.'],
+  missionNotes:['A good SOP removes decisions the process shouldn\'t require, not just lists what "usually" happens.','You have to infer some missing details (who owns it, what tool triggers it) — flag your assumptions rather than hiding them.','The output is a document, not a one-line description — "create an SOP" is not itself a finished deliverable.'],
   workflow:['Messy Process Description','Extract the Real Steps','Identify Owner & Trigger','Structure the SOP','Add Quality Check & Escalation','Finished SOP'],
   steps:[
-    {title:'Extract the Real Steps', body:'From Devon\\'s message, the actual sequence is: (1) new customer added to CRM, (2) someone emails them, (3) welcome meeting scheduled. That\\'s only 3 loose steps — you need to break each into clear, single actions.', why:'Vague verbs like "someone emails them" hide 3–4 real decisions (who emails, using what template, within what timeframe).'},
-    {title:'Fill the Structural Gaps', body:'Assign an Owner (who is accountable if this breaks — likely whoever manages the CRM), a Trigger (a new deal marked "Closed Won", most likely), and a realistic timeframe for each step (e.g., "within 1 business day").', why:'Without an owner and trigger, an SOP is just a description — it won\\'t actually prevent the inconsistency Devon is complaining about.'},
+    {title:'Extract the Real Steps', body:'From Devon\'s message, the actual sequence is: (1) new customer added to CRM, (2) someone emails them, (3) welcome meeting scheduled. That\'s only 3 loose steps — you need to break each into clear, single actions.', why:'Vague verbs like "someone emails them" hide 3–4 real decisions (who emails, using what template, within what timeframe).'},
+    {title:'Fill the Structural Gaps', body:'Assign an Owner (who is accountable if this breaks — likely whoever manages the CRM), a Trigger (a new deal marked "Closed Won", most likely), and a realistic timeframe for each step (e.g., "within 1 business day").', why:'Without an owner and trigger, an SOP is just a description — it won\'t actually prevent the inconsistency Devon is complaining about.'},
     {title:'Write It in SOP Structure', body:'Use: Purpose, Scope, Owner, Tools, Trigger, numbered Steps, Quality Check, Escalation, Completion Criteria. Keep each step to one action, written as an instruction ("Add the customer to HubSpot under...") not a description ("the customer is added").', why:'Numbered, single-action steps are what makes a document actually followable versus just informative.'}
   ],
   sopExample:{
@@ -618,13 +662,13 @@ const TASKS = [
     tools:'HubSpot CRM, Gmail, Google Calendar',
     trigger:'A deal status changes to "Closed Won" in HubSpot.',
     stepsList:[
-      'Within 1 business day: add the new customer\\'s full contact details to HubSpot under the "Active Customers" list.',
+      'Within 1 business day: add the new customer\'s full contact details to HubSpot under the "Active Customers" list.',
       'Within 1 business day: send the standard Welcome Email (template: "New Customer Welcome") from the shared support inbox.',
       'Within 2 business days: send a calendar invite for a 30-minute Welcome Meeting, offering at least 2 time options.',
-      'On Welcome Meeting completion: log meeting notes in the customer\\'s HubSpot record.'
+      'On Welcome Meeting completion: log meeting notes in the customer\'s HubSpot record.'
     ],
     qualityCheck:'Confirm the customer record shows a completed welcome email and a scheduled or completed welcome meeting within 3 business days of Closed Won.',
-    escalation:'If the customer hasn\\'t responded to scheduling within 3 business days, notify the Customer Success Lead for manual follow-up.',
+    escalation:'If the customer hasn\'t responded to scheduling within 3 business days, notify the Customer Success Lead for manual follow-up.',
     completion:'Welcome email sent, welcome meeting held, and meeting notes logged in HubSpot.'
   },
   checklist:[
@@ -638,10 +682,10 @@ const TASKS = [
   tryIt:{
     prompt:'A new messy process, no structure given.',
     client:'Refund Process — Fernwell Health',
-    request:'When a customer wants a refund, they usually email support, someone checks the order, and if it\\'s within 30 days we process it — otherwise we have to check with finance.',
+    request:'When a customer wants a refund, they usually email support, someone checks the order, and if it\'s within 30 days we process it — otherwise we have to check with finance.',
     hints:[
       'There are two very different paths hiding in this one description (within 30 days vs. outside 30 days) — your SOP needs to handle the branch, not just the happy path.',
-      'What happens if finance says no? That\\'s your Escalation section.'
+      'What happens if finance says no? That\'s your Escalation section.'
     ],
     answer:'Purpose: consistent, timely refund handling. Trigger: customer refund request received via support email. Steps: (1) Log the request and order number in the support tool within 1 business day. (2) Verify the order date. (3) If within 30 days, process the refund and confirm to the customer within 2 business days. (4) If outside 30 days, escalate to Finance with the order details and await a decision within 3 business days. Quality Check: refund status and customer confirmation logged in every case. Escalation: Finance declines → Customer Success Lead sends the customer a personalized explanation, not a form rejection.'
   },
@@ -654,10 +698,248 @@ const TASKS = [
 }
 ];
 
+/* ============================= DATA: INTERVIEW BANK ============================= */
+const INTERVIEW_BANK = [
+  {id:'q1', q:'Tell me about yourself.',
+    want:'A tight, relevant summary — not your whole life story. They want to know you can filter what matters for the room you\'re in.',
+    structure:['Who you are professionally, in one line','Your strongest relevant experience','Why you\'re pursuing this specific role now','A forward-looking close'],
+    strong:'"I\'m a SAP SD consultant with about five years of experience running order-to-cash support and configuration for enterprise clients — most recently handling 60 to 90 support tickets a month and mentoring a team of ten. That work is really structured operations and client communication under a different name, which is what pulled me toward VA and executive-support work. I\'m looking for a role where I can bring that same reliability to someone\'s day-to-day operations."',
+    mistake:'Reciting a full chronological resume, or undershooting — "I don\'t have VA experience but I\'m a fast learner" leads with a weakness instead of a transferable strength.',
+    better:'Lead with the transferable strength first; mention "new to VA specifically" only in passing, framed as a deliberate pivot rather than a gap.'},
+  {id:'q2', q:'Tell me about a time you managed competing priorities.',
+    want:'Whether you can triage under real pressure without dropping something important — this is the core of inbox and calendar work.',
+    structure:['Situation — what was competing for your attention','Task — what actually needed to happen','Action — how you decided what came first','Result — what happened, and what you\'d keep doing'],
+    strong:'"In a typical month I\'d have 60-plus open tickets ranging from a live order blocked in the system to a minor configuration request. I\'d triage by business impact first — anything blocking an active order or a client deadline jumped the queue — and batch the lower-impact requests into blocks so they didn\'t get lost. That kept our SLA compliance high even in high-volume months."',
+    mistake:'Describing everything as "urgent" with no visible decision criteria — it signals you can\'t actually distinguish urgent from important.',
+    better:'Name the specific criteria you used to decide order, not just the outcome.'},
+  {id:'q3', q:'How do you prioritize your tasks each day?',
+    want:'A repeatable method, not a vibe — clients want to trust your system will hold up on a chaotic day.',
+    structure:['Name your method (e.g., urgent/important sort)','Give a concrete example of applying it','Mention how you handle the exception when everything feels urgent'],
+    strong:'"I sort by whether something is time-boxed and whether it\'s high-consequence if it slips — the two aren\'t the same thing. If something is both, it goes first. If everything on my list looks urgent, I take that as a signal to check in with the client on real deadlines rather than guessing."',
+    mistake:'Saying "I just do whatever\'s most urgent" without a definition of urgent — it sounds reactive rather than deliberate.',
+    better:'Explicitly separate urgency from importance, and mention what you do when priorities are unclear.'},
+  {id:'q4', q:'How do you handle a difficult or upset client?',
+    want:'Composure and de-escalation skill — can you keep a relationship intact under friction?',
+    structure:['Acknowledge the emotion without being defensive','Get to the concrete issue fast','State what you\'ll do and by when','Follow up to confirm it landed'],
+    strong:'"I\'d supported clients where a live production issue was directly costing them time and money — the instinct isn\'t to explain why it happened first, it\'s to acknowledge the impact, get moving on a fix, and give a clear timeframe. Explanations come after the issue is handled, not instead of handling it."',
+    mistake:'Getting defensive, or over-apologizing without ever stating a concrete next step.',
+    better:'Acknowledge briefly, then pivot fast to the concrete action and timeline — that\'s what actually calms an upset client.'},
+  {id:'q5', q:'Describe a time you had to learn something new quickly under time pressure.',
+    want:'Evidence you can get functional in an unfamiliar tool or process fast, without hand-holding.',
+    structure:['What was unfamiliar','Why there was no time to ease into it','How you got up to speed','What you\'d do differently next time'],
+    strong:'"When our team moved between ECC and S/4HANA support scopes, I had a live caseload and no real ramp-up time. I focused first on the handful of transaction types that made up most of the ticket volume, got those solid within days, and filled in the long tail as it came up — rather than trying to learn the whole system before touching a ticket."',
+    mistake:'Implying you learned everything perfectly and instantly — it reads as either exaggerated or like you don\'t self-assess.',
+    better:'Show a prioritized learning approach (core 80% first), which is a more credible and more useful signal than "I just figured it out."'},
+  {id:'q6', q:'What tools are you comfortable with, and how do you approach a tool you\'ve never used?',
+    want:'Realistic self-assessment plus a method for closing tool gaps — nobody expects you to know every platform.',
+    structure:['State your genuinely strong tools first','Be honest about tools you haven\'t used','Describe your approach to ramping up on something new'],
+    strong:'"I\'m very comfortable in Gmail, Google Workspace, and structured ticketing systems like ServiceNow and SAP Solution Manager. I haven\'t used Asana or HubSpot professionally yet, but the underlying logic — status fields, assignment, follow-up — is the same pattern I already work in daily, so I\'d expect a short ramp-up."',
+    mistake:'Claiming expert-level comfort with every tool a job post lists — it\'s easy to spot and costs trust the moment it\'s tested.',
+    better:'Be specific about genuine strengths and map unfamiliar tools back to a pattern you already know.'},
+  {id:'q7', q:'What\'s your greatest strength as a VA?',
+    want:'Self-awareness plus a concrete example, not just an adjective.',
+    structure:['Name one specific strength','Ground it in a real example','Connect it to the value it creates for a client'],
+    strong:'"Reliability under volume — I spent years being the person a live business process depended on, where a dropped ticket had a real downstream cost. That translates directly into never letting something quietly slip through the cracks in a client\'s inbox or calendar."',
+    mistake:'Naming a generic strength ("hard worker," "detail-oriented") with no example attached.',
+    better:'Pick one specific, provable strength and back it with a real number or scenario.'},
+  {id:'q8', q:'Tell me about a process you improved.',
+    want:'Initiative and process-thinking — can you make something better without being told to?',
+    structure:['What the process looked like before','What problem it was causing','What you changed','The measurable or observable result'],
+    strong:'"Configuration requests that came in as service tickets were often incomplete, which meant back-and-forth before work could even start. I put together a short intake checklist for the most common request types, which cut the clarification round-trips significantly and let us close those tickets faster."',
+    mistake:'Describing a process change with no clear before/after or result — it reads as busywork rather than impact.',
+    better:'Always close the story with a result, even an approximate one ("cut back-and-forth by roughly half").'},
+  {id:'q9', q:'How do you handle ambiguous or incomplete instructions from a client?',
+    want:'Whether you\'ll guess and risk redoing work, or freeze — versus asking one sharp clarifying question and moving.',
+    structure:['Acknowledge you noticed the ambiguity','Describe the one clarifying question you\'d ask','Explain how you\'d proceed if you truly couldn\'t get an answer in time'],
+    strong:'"I ask one specific, scoped question rather than a broad one — not \'what do you want me to do,\' but something like \'should this include the last 6 months of data or just this quarter.\' If I genuinely can\'t get an answer in time, I\'ll proceed on the most reasonable interpretation and flag the assumption clearly when I deliver, so it\'s easy to correct."',
+    mistake:'Either guessing silently with no flagged assumption, or bouncing every unclear detail back to the client.',
+    better:'One targeted question beats five vague ones — and a flagged assumption is almost as good as an answered question.'},
+  {id:'q10', q:'How do you handle working across multiple clients or projects at once?',
+    want:'Whether context-switching causes you to drop details or mix things up.',
+    structure:['Your system for keeping contexts separate','How you avoid cross-contamination of details','How you handle a conflict between two clients\' urgent needs'],
+    strong:'"I kept 60-plus concurrent tickets straight by relying on the system of record rather than memory — every status, note, and next action lived in the ticketing tool, not in my head. That habit carries directly into managing multiple clients: one dedicated space per client, and I don\'t trust myself to remember what I can look up instead."',
+    mistake:'Claiming to "just keep it all in my head" — this is a red flag for anyone managing more than one relationship.',
+    better:'Point to an actual system (a tool, a naming convention, a daily check-in ritual) rather than a personal claim about memory or multitasking ability.'},
+  {id:'q11', q:'Tell me about a time you caught a mistake before it became a problem.',
+    want:'Attention to detail and ownership — do you actively check your own work?',
+    structure:['What the task was','What almost went wrong','How you caught it','What you changed afterward, if anything'],
+    strong:'"Before closing out configuration tickets, I\'d always trace the change through a test scenario before marking it done. More than once that caught a setting that looked right but would have caused an issue for a different order type. It\'s a habit — verify before you call something finished, not just after."',
+    mistake:'Describing a mistake you caught *after* it caused a problem — that answers a different question.',
+    better:'Be specific that the catch happened before any impact, and name the checking habit that made it possible.'},
+  {id:'q12', q:'Describe your experience handling confidential or sensitive information.',
+    want:'Trustworthiness with access — clients hand VAs their inbox, calendar, sometimes financial or personal details.',
+    structure:['The kind of sensitive data you\'ve handled','What discipline you kept around it','Why that discipline matters to you, not just as a rule'],
+    strong:'"Enterprise support work runs entirely on sensitive data — order details, financial records, customer information — under strict access controls. I\'m used to treating access as something to be careful with by default, not something to think about only when reminded. That instinct doesn\'t turn off just because the data is now someone\'s personal calendar instead of a company database."',
+    mistake:'Treating the question lightly ("I\'d never share anything, obviously") without showing the instinct is already a practiced habit.',
+    better:'Point to real experience operating under access discipline, not just a promise about future behavior.'},
+  {id:'q13', q:'Why should we hire you over someone with more VA-specific experience?',
+    want:'Confidence without arrogance — a genuine case for what you bring that a "more experienced" VA might not.',
+    structure:['Acknowledge the fair comparison','Name what your background adds that\'s harder to teach','Close with what you\'re actively doing to close the tool/experience gap'],
+    strong:'"Someone with more VA hours will be faster on tool-specific shortcuts at first, and that\'s a fair edge. What I bring is five years of operating inside a real business process with real consequences for dropped work — that\'s a harder thing to build than tool familiarity, which I\'m actively closing through focused practice."',
+    mistake:'Either conceding the point entirely ("you\'re right, I don\'t have much to offer yet") or dismissing the question defensively.',
+    better:'Concede the narrow, fair part of the comparison, then pivot to the specific thing you bring that experience alone doesn\'t guarantee.'},
+  {id:'q14', q:'Where do you see yourself in a year?',
+    want:'Whether you have direction, and whether that direction is compatible with the role they\'re hiring for.',
+    structure:['A realistic near-term goal','How this role fits into that goal','A note on growth that benefits them too, not just you'],
+    strong:'"In a year, I\'d like to be the trusted operator for one or two clients — someone they hand ambiguous, high-stakes things to because they know it\'ll come back handled. That means using this next year to build real range across the core VA tool set and client types, on top of the process discipline I already bring."',
+    mistake:'Answering with something unrelated to the role (e.g., "I want to go back into SAP consulting") — it signals the role is a placeholder, not a genuine direction.',
+    better:'Make sure the stated goal is one this specific role plausibly builds toward.'},
+  {id:'q15', q:'What are your rates, and what\'s your availability?',
+    want:'Clarity and confidence around your own value — hesitation here reads as inexperience regardless of your actual skill.',
+    structure:['State a number or range, not a shrug','State your actual available hours plainly','Leave room to discuss scope without undervaluing yourself upfront'],
+    strong:'"For the scope you\'ve described, I\'d be looking at [a specific rate/range] for [X] hours a week. I\'m available starting [date] and can flex slightly on hours once we\'re a few weeks in and I have a clearer sense of the workload."',
+    mistake:'Answering "whatever you think is fair" — it hands away your own pricing power and often reads as a lack of confidence.',
+    better:'Have a number ready before the conversation, based on your actual research, not decided on the spot.'},
+  {id:'q16', q:'Why do you want to work as a virtual assistant?',
+    want:'Whether this is a considered move or a fallback — clients want someone who wants this specific kind of work.',
+    structure:['What draws you to the work itself, not just remote flexibility','A concrete tie to skills or experience you already have','What kind of client or work you\'re specifically excited about'],
+    strong:'"I like being the person who makes someone else\'s operation run smoothly without them having to think about it — that\'s essentially what I\'ve done in enterprise support for years, just narrowly scoped to one system. VA work lets me apply the same instinct much more broadly, across someone\'s whole day rather than one ticket queue."',
+    mistake:'Leading with lifestyle reasons only ("I want to work from home and set my own hours") with no mention of the work itself.',
+    better:'Lead with genuine interest in the work and the value you create; flexibility can be a secondary mention, not the headline.'},
+];
+
+/* ============================= DATA: 14-DAY ROADMAP (Phase 1 of 60) ============================= */
+const ROADMAP = [
+  {day:1, title:'Orientation — What a VA Actually Does', focus:'orientation',
+    learn:'A Virtual Assistant isn\'t a generalist who does "a bit of everything." The best VAs are trusted operators — they take a request, understand the real goal behind it, and deliver a result the client doesn\'t have to double-check. Your SAP SD background already built a lot of this instinct under a different name.',
+    seeWorkflow:['Client Request','Understand the Goal','Execute','Quality Check','Report Back'],
+    seeLink:{view:'mapping', label:'See your Corporate → VA skill map'},
+    toolOfDay:{name:'Claude / ChatGPT', why:'Your daily thinking partner — for drafting, summarizing, and thinking through client requests fast.'},
+    interviewId:'q1',
+    quiz:[
+      {q:'What is the PRIMARY goal of a VA completing a task?', options:['Finishing as fast as possible','Doing exactly what was literally said, nothing more','Understanding the real goal and delivering a trustworthy result','Avoiding asking the client any questions'], correctIdx:2, explain:'Speed and literal compliance both fail if they miss the actual goal — understanding intent is what separates a good VA from an order-taker.'},
+      {q:'Which of your SAP SD skills transfers most directly to VA work?', options:['Writing ABAP code','Handling a high volume of structured support tickets','Nothing really transfers','Just the engineering degree'], correctIdx:1, explain:'High-volume structured ticket handling is inbox and task triage under a different name.'}
+    ],
+    masterText:'You can explain the VA mindset in your own words and name at least one of your own transferable skills.'},
+  {day:2, title:'Email Management', focus:'task', taskId:'email-cleanup',
+    learn:'The goal of inbox work is never "zero unread" — it\'s making sure nothing time-sensitive or client-facing gets buried. Today you\'ll run the full triage process on a real (fictional) executive inbox.',
+    toolOfDay:{name:'Gmail', why:'This is where the mess lives — you\'ll triage directly inside it on real client work from here on.'},
+    interviewId:'q2',
+    quiz:[
+      {q:'An email from a client threatening to cancel over a live issue — what category?', options:['Newsletter','Reference','Urgent','Informational'], correctIdx:2, explain:'Client-facing and reputationally risky — this needs eyes today, no exceptions.'},
+      {q:'What should happen to purely informational emails once skimmed?', options:['Delete them','Archive them','Leave them unread forever','Reply "noted" to each one'], correctIdx:1, explain:'Archiving clears the active view while keeping the message searchable later — deleting destroys it.'}
+    ],
+    masterText:'Complete the Email Management checklist to 100% and finish its Try It Yourself scenario.'},
+  {day:3, title:'Prioritization — Urgent vs. Important', focus:'task', taskId:'priority-matrix',
+    learn:'Urgent means it has a clock on it. Important means it matters if done poorly or missed. Confusing the two is the single most common reason new VAs spend a whole day on loud, low-value requests.',
+    toolOfDay:null,
+    interviewId:'q3',
+    quiz:[
+      {q:'A routine weekly report, due today but low-visibility if a day late — which quadrant?', options:['Do Now','Schedule','Delegate','Archive'], correctIdx:1, explain:'It has a nominal deadline but low real consequence — Schedule it rather than treating it as a fire.'},
+      {q:'Which quadrant is most often accidentally neglected by new VAs?', options:['Urgent + Important','Important, not Urgent','Urgent, not Important','Neither'], correctIdx:1, explain:'Nothing forces this quadrant onto your radar the way a deadline does — it has to be deliberately scheduled.'}
+    ],
+    masterText:'Sort all 15 practice tasks and complete the checklist for Prioritization.'},
+  {day:4, title:'Client Communication Essentials', focus:'cheatsheet', cheatTitle:'Client Communication', decisionId:'d1',
+    learn:'The way you communicate a result often matters as much as the result itself. Lead with the outcome, close every loop, and never leave a request acknowledged-but-silent for more than a day.',
+    toolOfDay:{name:'Slack', why:'The default for quick client and team check-ins — where most of this communication actually happens.'},
+    interviewId:'q4',
+    quiz:[
+      {q:'A client is upset about a late delivery. What should you do first?', options:['Explain in detail why it happened','Acknowledge the impact, then state your next step and timeline','Apologize repeatedly with no concrete plan','Wait for them to calm down before responding'], correctIdx:1, explain:'Acknowledge briefly, then move straight to the concrete action — that\'s what actually de-escalates.'},
+      {q:'How long should a client request sit acknowledged but not actually progressed?', options:['As long as needed','No more than a day without an update','A week is fine if you\'re busy','Only respond once it\'s fully done'], correctIdx:1, explain:'Silence after acknowledgment erodes trust fast — a same-day update, even "still in progress," keeps the loop open.'}
+    ],
+    masterText:'Work through the "500 rows, 20 minutes" decision scenario and read the Client Communication cheat sheet.'},
+  {day:5, title:'Calendar Management Under Travel', focus:'task', taskId:'calendar-travel',
+    learn:'Calendar conflicts during travel almost always come down to two things: correctly converting time zones, and knowing which 1–2 meetings are truly non-negotiable versus everything else, which is negotiable around them.',
+    toolOfDay:{name:'Google Calendar', why:'You\'ll move, confirm, and buffer meetings directly here.'},
+    interviewId:'q5',
+    quiz:[
+      {q:'The single most common (and most damaging) calendar mistake is:', options:['Adding too many buffers','Forgetting to convert time zones','Rescheduling too often','Using Google Calendar instead of Outlook'], correctIdx:1, explain:'Keeping the same clock time across a time-zone shift is the classic error — it silently breaks the whole schedule.'},
+      {q:'When you move someone\'s meeting, what must you always do?', options:['Nothing, if the new time is objectively fine','Notify the attendee','Only tell the client, not the attendee','Cancel it instead'], correctIdx:1, explain:'A rescheduled meeting nobody was told about is a bigger problem than the original conflict.'}
+    ],
+    masterText:'Complete the Calendar Management checklist and its Try It Yourself scenario.'},
+  {day:6, title:'Tool Foundations — Workspace & AI', focus:'tools',
+    learn:'You don\'t need every tool on day one. Google Workspace and an AI assistant (Claude or ChatGPT) cover the large majority of early VA work — everything else can be learned as a specific client requires it.',
+    seeLink:{view:'tools', label:'Open the full Tool Map'},
+    toolOfDay:{name:'Google Workspace (Docs/Sheets/Drive)', why:'The backbone of most VA deliverables — docs, trackers, shared files.'},
+    interviewId:'q6',
+    quiz:[
+      {q:'Which tool tier should a brand-new VA focus on first?', options:['Master Later tools, to stand out','Learn First tools only','Whatever the client happens to mention first','All tools equally, immediately'], correctIdx:1, explain:'Learn First tools (Gmail, Workspace, an AI assistant) cover the most ground for the least ramp-up time.'},
+      {q:'Why learn Trello before ClickUp?', options:['Trello is more powerful','Trello is simpler, so it teaches the underlying PM logic faster','ClickUp doesn\'t have boards','No real reason'], correctIdx:1, explain:'Trello\'s simplicity makes the core project-management logic easy to absorb before tackling denser tools.'}
+    ],
+    masterText:'Review the full Tool Map and identify your 3 highest-priority tools to practice next.'},
+  {day:7, title:'Week 1 Checkpoint', focus:'review',
+    learn:'Before moving on, make sure the fundamentals from this week are actually solid — not just seen once. Revisit any checklist below 100% before continuing.',
+    toolOfDay:null,
+    interviewId:'q7',
+    quiz:[
+      {q:'What\'s the real test of whether a skill is "mastered" in this program?', options:['Reading about it once','Watching a walkthrough','Completing the guided task AND a new scenario independently','Passing a single quiz question'], correctIdx:2, explain:'Independent application on a new scenario is what separates "seen it" from "can actually do it."'},
+      {q:'If your Client-Ready Score for a skill is still low after this week, what should you do?', options:['Ignore it and move on','Revisit that task\'s checklist and Try It Yourself scenario','Skip straight to Week 2','Lower your standards for what "done" means'], correctIdx:1, explain:'The checklist and independent scenario are exactly what closes the gap — revisit them rather than pushing forward on a shaky foundation.'}
+    ],
+    masterText:'Every Week 1 task (Email, Prioritization, Calendar) shows 100% on its checklist.'},
+  {day:8, title:'SOP Creation', focus:'task', taskId:'sop-creation',
+    learn:'A good SOP removes decisions the process shouldn\'t require — it doesn\'t just describe what "usually" happens, it defines what must happen, who owns it, and what to do when something breaks.',
+    toolOfDay:{name:'Google Docs', why:'SOPs need to be a clean, shareable, living document the whole team can reference.'},
+    interviewId:'q8',
+    quiz:[
+      {q:'Which of these is written correctly for an SOP step?', options:['"The customer gets an email"','"Send the Welcome Email template from the shared inbox within 1 business day"','"Emails are usually sent"','"Someone handles the welcome email"'], correctIdx:1, explain:'A step should be a specific instruction with an owner and timeframe, not a passive description.'},
+      {q:'What does an SOP need that a simple description doesn\'t?', options:['Nothing extra','An owner, a trigger, and an escalation path','More adjectives','A shorter length'], correctIdx:1, explain:'Owner, trigger, and escalation are exactly what prevents the process from drifting back into inconsistency.'}
+    ],
+    masterText:'Complete the SOP Creation checklist and convert the refund-process scenario on your own.'},
+  {day:9, title:'Decision Training — Handling Ambiguity', focus:'decision', decisionIds:['d2','d3'],
+    learn:'You will regularly get instructions that are incomplete, urgent-sounding, or contradictory. The skill isn\'t having a perfect answer every time — it\'s reacting fast, asking one sharp question when needed, and never going silent.',
+    toolOfDay:null,
+    interviewId:'q9',
+    quiz:[
+      {q:'A client pings for an unplanned call in 5 minutes on a topic you don\'t know. Best first move?', options:['Say yes and hope to keep up','Ignore it until you finish your current task','Reply immediately, flag you\'re not briefed, and ask what to cover','Decline with no explanation'], correctIdx:2, explain:'Speed of response matters most — an honest, fast reply protects both your credibility and the meeting outcome.'},
+      {q:'Two meetings overlap: a recurring internal sync and a first call with an investor added yesterday. What moves?', options:['The investor call, since it was added more recently','The internal sync, since it\'s lower-stakes and easier to reschedule','Neither — let the CEO figure it out','Cancel the internal sync with no notice'], correctIdx:1, explain:'Weigh importance, not recency — protect the harder-to-reschedule, higher-stakes meeting.'}
+    ],
+    masterText:'Work through both decision scenarios and read their explanations.'},
+  {day:10, title:'Tool Roadmap — Project Management & CRM', focus:'tools',
+    learn:'Project management and CRM tools all share the same underlying logic — records, statuses, and follow-ups. Once you understand that pattern in one tool (like Trello), the rest become fast to pick up.',
+    seeLink:{view:'tools', label:'Review the PM & CRM groups on the Tool Map'},
+    toolOfDay:{name:'Trello', why:'Simplest board tool — the easiest place to learn project-management logic before ClickUp or Asana.'},
+    interviewId:'q10',
+    quiz:[
+      {q:'What\'s the common underlying logic across most PM and CRM tools?', options:['They all look identical','Records, statuses, and follow-ups','They require coding','None — each is completely different'], correctIdx:1, explain:'Once you spot this shared pattern, switching tools becomes a UI problem, not a conceptual one.'},
+      {q:'Best system for managing multiple concurrent clients without mixing up details?', options:['Keep it all in memory','One dedicated space per client, tracked in a tool, not memory','Handle whichever client emails last','Combine all clients into one shared doc'], correctIdx:1, explain:'Relying on a system of record rather than memory is what actually prevents cross-contamination between clients.'}
+    ],
+    masterText:'Identify which PM tool you\'ll practice with next and why, based on the Tool Map.'},
+  {day:11, title:'Email Management — Independent Replay', focus:'task', taskId:'email-cleanup', replay:true,
+    learn:'Today, skip the walkthrough. Go straight to the Try It Yourself scenario for Email Management and work it the way you would for a brand-new client, with no guided steps.',
+    toolOfDay:null,
+    interviewId:'q11',
+    quiz:[
+      {q:'When replaying a task independently, what should you rely on?', options:['Guessing randomly','The categories and reasoning you practiced in the guided version','Waiting for hints immediately','Skipping categorization entirely'], correctIdx:1, explain:'The whole point of independent practice is applying the same reasoning without being walked through it again.'},
+      {q:'If you\'re truly stuck on the independent scenario, what\'s the right move?', options:['Give up on the task','Use Hint 1 before jumping to the full answer','Immediately reveal the full answer','Guess and never check'], correctIdx:1, explain:'Hints are there to nudge you — reach for them before the full answer so you keep building the instinct yourself.'}
+    ],
+    masterText:'Complete the Email Management Try It Yourself scenario without revealing the answer immediately.'},
+  {day:12, title:'Calendar Management — Independent Replay', focus:'task', taskId:'calendar-travel', replay:true,
+    learn:'Same idea as Day 11 — go directly to the Try It Yourself calendar scenario and resolve the conflicts on your own reasoning.',
+    toolOfDay:null,
+    interviewId:'q12',
+    quiz:[
+      {q:'In the independent calendar scenario, what\'s the first thing to check?', options:['Which meetings are fixed vs. flexible, and the real time-zone gap','The meeting titles only','Whether the client seems busy','Nothing — just start moving things'], correctIdx:0, explain:'Fixed-vs-flexible and an accurate time-zone conversion are the two things every calendar conflict actually hinges on.'},
+      {q:'What should happen after you resolve the conflicts?', options:['Nothing further needed','Notify affected attendees and confirm the final schedule with the client','Just leave the new calendar as-is silently','Delete the conflicting meetings'], correctIdx:1, explain:'Notification and confirmation are what turn a resolved conflict into a trustworthy outcome.'}
+    ],
+    masterText:'Complete the Calendar Management Try It Yourself scenario on your own reasoning.'},
+  {day:13, title:'Full Skill Review', focus:'review',
+    learn:'Sweep back through every cheat sheet once — Email, Calendar, Prioritization, SOP, Client Communication, Daily VA Checklist. The goal isn\'t new information, it\'s making the patterns automatic.',
+    seeLink:{view:'cheatsheets', label:'Open all Cheat Sheets'},
+    toolOfDay:null,
+    interviewId:'q13',
+    quiz:[
+      {q:'What\'s the purpose of reviewing cheat sheets you\'ve already used?', options:['To learn something brand new','To make the patterns automatic rather than something you have to think through each time','Busywork with no real value','To replace doing the actual tasks'], correctIdx:1, explain:'Repetition on already-learned material is what turns a checklist into an instinct.'},
+      {q:'A good sign you\'re ready to move toward client-facing work is:', options:['You\'ve read every cheat sheet once','You can apply the reasoning to a brand-new scenario without hints','You\'ve memorized every quiz answer','You\'ve spent the most total hours in the app'], correctIdx:1, explain:'Independent application to new situations is the real readiness signal — not exposure or hours logged.'}
+    ],
+    masterText:'Revisit every cheat sheet at least once this week.'},
+  {day:14, title:'Client-Ready Checkpoint', focus:'review', finalDay:true,
+    learn:'This is the checkpoint, not the finish line. Review your Client-Ready Score on the Dashboard, close out any checklist still under 100%, and use today\'s bonus interview questions to round out your prep.',
+    seeLink:{view:'dashboard', label:'Review your Client-Ready Score'},
+    toolOfDay:null,
+    interviewId:'q14', bonusInterviewIds:['q15','q16'],
+    quiz:[
+      {q:'What does a Client-Ready Score below 100% on a task actually mean?', options:['You failed permanently','That task\'s checklist still has unchecked items to revisit','The app is broken','Nothing — it doesn\'t matter'], correctIdx:1, explain:'It\'s a direct pointer back to specific unfinished checklist items, not a permanent judgment.'},
+      {q:'After this 14-day path, what\'s the honest next step?', options:['You\'re fully done forever','Keep building: more tasks, tools, and practice as they\'re added','Stop practicing immediately','Ignore your weakest skills'], correctIdx:1, explain:'This is Phase 1 of a longer path — the goal is a strong foundation to keep building on, not a finish line.'}
+    ],
+    masterText:'Client-Ready Score reviewed, every checklist at 100%, and both bonus interview questions reviewed.'},
+];
+
 /* ============================= NAV ============================= */
 const NAV = [
   {id:'dashboard', label:'Dashboard', icon:'🏠'},
+  {id:'roadmap', label:'14-Day Roadmap', icon:'🗺️'},
   {id:'tasks', label:'Task Library', icon:'📋'},
+  {id:'interview', label:'Interview Prep', icon:'🎤'},
   {id:'decisions', label:'What Would You Do?', icon:'🧭'},
   {id:'tools', label:'Tool Map', icon:'🧰'},
   {id:'cheatsheets', label:'Cheat Sheets', icon:'📄'},
@@ -710,22 +992,217 @@ function clientReadyScore(){
   return Math.round(totalPct / TASKS.length);
 }
 
+/* ============================= ROADMAP HELPERS ============================= */
+function isDayComplete(dayNum){ return LS.get('day_complete_'+dayNum, false); }
+function isDayUnlocked(dayNum){ if(dayNum===1) return true; return isDayComplete(dayNum-1); }
+function markDayComplete(dayNum){ LS.set('day_complete_'+dayNum, true); render(); }
+function unmarkDayComplete(dayNum){ LS.set('day_complete_'+dayNum, false); render(); }
+function currentDayNum(){
+  for(let d=1; d<=ROADMAP.length; d++){ if(!isDayComplete(d)) return d; }
+  return ROADMAP.length;
+}
+function roadmapCompletedCount(){ return ROADMAP.filter(d=>isDayComplete(d.day)).length; }
+function getQuizPick(dayNum, qIdx){ return LS.get('quiz_'+dayNum+'_'+qIdx, null); }
+function pickQuiz(dayNum, qIdx, optIdx){ LS.set('quiz_'+dayNum+'_'+qIdx, optIdx); render(); }
+function quizAllAnswered(day){
+  if(!day.quiz || day.quiz.length===0) return true;
+  return day.quiz.every((_,i)=> getQuizPick(day.day,i) !== null);
+}
+function renderWorkflowDiagram(steps){
+  return `<div class="workflow">${steps.map((w,i)=>`<div class="wf-node">${w}</div>${i<steps.length-1?'<span class="wf-arrow">→</span>':''}`).join('')}</div>`;
+}
+function renderQuizBlock(day){
+  if(!day.quiz || day.quiz.length===0) return '';
+  return day.quiz.map((q,qi)=>{
+    const picked = getQuizPick(day.day, qi);
+    return `<div class="card" style="margin-bottom:10px;">
+      <p><b>${qi+1}. ${q.q}</b></p>
+      ${q.options.map((opt,oi)=>{
+        let cls='';
+        if(picked!==null){
+          if(oi===q.correctIdx) cls='correct';
+          else if(oi===picked) cls='wrong';
+        }
+        return `<button class="quiz-opt ${cls}" onclick="pickQuiz(${day.day},${qi},${oi})">${opt}</button>`;
+      }).join('')}
+      ${picked!==null?`<div class="why-box" style="margin-top:8px;"><div class="why-label">${picked===q.correctIdx?'✓ Correct':'✗ Not quite'}</div>${q.explain}</div>`:''}
+    </div>`;
+  }).join('');
+}
+function renderInterviewCard(id, compact){
+  const q = INTERVIEW_BANK.find(x=>x.id===id);
+  if(!q) return '';
+  return `<div class="card">
+    <div class="eyebrow">INTERVIEW QUESTION</div>
+    <h3>"${q.q}"</h3>
+    <div class="interview-flow">
+      <div class="iv-block"><div class="iv-label">What they want to know</div>${q.want}</div>
+      <div class="iv-block"><div class="iv-label">Answer structure</div>${q.structure.map(s=>`• ${s}`).join('<br>')}</div>
+      <div class="iv-block iv-strong"><div class="iv-label">Strong answer example</div>${q.strong}</div>
+      <div class="iv-block iv-mistake"><div class="iv-label">Common mistake</div>${q.mistake}</div>
+      <div class="iv-block iv-better"><div class="iv-label">Better version</div>${q.better}</div>
+    </div>
+  </div>`;
+}
+
+/* ============================= RENDER: ROADMAP ============================= */
+function renderRoadmap(){
+  const done = roadmapCompletedCount();
+  const cur = currentDayNum();
+  return `
+  <div class="eyebrow">Phase 1 · Days 1–14</div>
+  <h1>Your 14-Day Roadmap</h1>
+  <p class="small-muted" style="max-width:640px;">This is Phase 1 of the full 60-day path — a real, complete sequence built on the tasks, tools, and interview prep already in the app. More days will extend this same path as new tasks are added.</p>
+  <div class="card" style="margin-bottom:18px;">
+    <div class="pbar-row"><span>Roadmap Progress</span><span>${done} / ${ROADMAP.length} days complete</span></div>
+    <div class="pbar-track"><div class="pbar-fill" style="width:${Math.round(done/ROADMAP.length*100)}%"></div></div>
+  </div>
+  <div class="rm-track">
+  ${ROADMAP.map(d=>{
+    const complete = isDayComplete(d.day);
+    const unlocked = isDayUnlocked(d.day);
+    const isCurrent = !complete && d.day===cur;
+    const dotCls = complete?'complete':(isCurrent?'current':'locked');
+    const statusCls = complete?'rm-status-complete':(isCurrent?'rm-status-current':'rm-status-locked');
+    const statusLabel = complete?'Complete':(isCurrent?'Current':'Locked');
+    const clickable = unlocked;
+    return `<div class="rm-day">
+      <div class="rm-dot ${dotCls}">${complete?'✓':d.day}</div>
+      <div class="card rm-card ${clickable?'clickable':'locked'}" ${clickable?`onclick="goDay(${d.day})"`:''}>
+        <div>
+          <div style="font-size:.72rem; color:#8a8f89; font-weight:600;">DAY ${d.day}</div>
+          <div style="font-weight:600;">${d.title}</div>
+        </div>
+        <span class="rm-status ${statusCls}">${unlocked?statusLabel:'🔒 Locked'}</span>
+      </div>
+    </div>`;
+  }).join('')}
+  </div>
+  `;
+}
+
+/* ============================= RENDER: DAY DETAIL ============================= */
+function renderDayDetail(dayNum){
+  const day = ROADMAP.find(d=>d.day===dayNum);
+  if(!day) return `<div class="card">Day not found.</div>`;
+  const task = day.taskId ? TASKS.find(t=>t.id===day.taskId) : null;
+  const complete = isDayComplete(day.day);
+  const canComplete = quizAllAnswered(day);
+  const idx = ROADMAP.findIndex(d=>d.day===dayNum);
+  const next = ROADMAP[idx+1];
+
+  let sec = 1;
+  const label = (txt) => `<div class="day-section-label"><span class="day-section-num">${sec++}</span>${txt}</div>`;
+
+  return `
+  <div class="crumbs"><button onclick="go('roadmap')">← 14-Day Roadmap</button></div>
+  <div class="eyebrow">DAY ${day.day} OF ${ROADMAP.length}</div>
+  <h1>${day.title}</h1>
+
+  <div class="card">
+    ${label('Learn')}
+    <p>${day.learn}</p>
+  </div>
+
+  <div class="card">
+    ${label('See')}
+    ${day.seeWorkflow?renderWorkflowDiagram(day.seeWorkflow):''}
+    ${task?renderWorkflowDiagram(task.workflow):''}
+    ${day.seeLink?`<button class="btn btn-outline" onclick="go('${day.seeLink.view}')">${day.seeLink.label} →</button>`:''}
+  </div>
+
+  ${task?`<div class="card">
+    ${label(day.replay?'Follow → Practice (skip straight to independent practice)':'Follow')}
+    <p>Today's task: <b>${task.client}</b></p>
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      ${!day.replay?`<button class="btn btn-primary" onclick="go('taskDetail','${task.id}','walkthrough')">Show Me How →</button>
+      <button class="btn btn-outline" onclick="go('taskDetail','${task.id}','practice')">Go to Practice →</button>`:
+      `<button class="btn btn-primary" onclick="go('taskDetail','${task.id}','tryit')">Go straight to Try It Yourself →</button>`}
+    </div>
+  </div>`:''}
+
+  ${day.cheatTitle?`<div class="card">
+    ${label('See / Follow')}
+    <p>Review the <b>${day.cheatTitle}</b> cheat sheet before continuing.</p>
+    <button class="btn btn-outline" onclick="go('cheatsheets')">Open Cheat Sheets →</button>
+  </div>`:''}
+
+  ${day.decisionId?renderDecisionSection(day, [day.decisionId], sec++):''}
+  ${day.decisionIds?renderDecisionSection(day, day.decisionIds, sec++):''}
+
+  ${task && !day.replay?`<div class="card">
+    ${label('Practice → Do It Yourself')}
+    <p>Once you\'ve worked through the guided practice, finish the independent scenario.</p>
+    <button class="btn btn-primary" onclick="go('taskDetail','${task.id}','tryit')">Try It Yourself →</button>
+  </div>`:''}
+
+  <div class="card">
+    ${label('Interview')}
+    ${renderInterviewCard(day.interviewId)}
+    ${day.bonusInterviewIds?day.bonusInterviewIds.map(id=>`<div style="margin-top:10px;">${renderInterviewCard(id)}</div>`).join(''):''}
+  </div>
+
+  ${day.toolOfDay?`<div class="card">
+    ${label('Tool of the Day')}
+    <div class="tool-card"><div class="tool-emoji">🧰</div><div><b>${day.toolOfDay.name}</b><div class="tool-why">${day.toolOfDay.why}</div></div></div>
+  </div>`:''}
+
+  <div class="card">
+    ${label('Check')}
+    ${renderQuizBlock(day)}
+  </div>
+
+  <div class="card" style="background:var(--primary-d); color:#fff;">
+    ${label('Master')}
+    <p style="opacity:.9;">${day.masterText}</p>
+    ${complete?
+      `<div style="display:flex; gap:10px; align-items:center;">
+        <span class="badge badge-beginner" style="background:var(--gold); color:var(--primary-d);">✓ Day Complete</span>
+        ${next?`<button class="btn btn-gold" onclick="goDay(${next.day})">Continue to Day ${next.day} →</button>`:`<button class="btn btn-gold" onclick="go('roadmap')">Back to Roadmap</button>`}
+      </div>`:
+      `<button class="btn btn-gold" onclick="markDayComplete(${day.day})" ${canComplete?'':'disabled'}>${canComplete?'Mark Day Complete':'Answer the Check questions above first'}</button>`
+    }
+  </div>
+  `;
+}
+function renderDecisionSection(day, ids, num){
+  return `<div class="card">
+    <div class="day-section-label"><span class="day-section-num">${num}</span>Decision Practice</div>
+    ${ids.map(id=>{
+      const d = DECISIONS.find(x=>x.id===id);
+      return d?renderDecisionCard(d):'';
+    }).join('')}
+  </div>`;
+}
+
+/* ============================= RENDER: INTERVIEW BANK ============================= */
+function renderInterviewBank(){
+  return `
+  <div class="eyebrow">Interview Prep</div>
+  <h1>16 Questions, Fully Broken Down</h1>
+  <p class="small-muted" style="max-width:640px;">Each question shows what the interviewer is really asking, how to structure your answer, a strong example built from your own SAP SD background, the common mistake, and a better version.</p>
+  ${INTERVIEW_BANK.map(q=>renderInterviewCard(q.id)).join('')}
+  `;
+}
+
 /* ============================= RENDER: DASHBOARD ============================= */
 function renderDashboard(){
   const readiness = clientReadyScore();
   const matrix = overallSkillMatrix();
-  const featured = TASKS[0];
+  const cur = currentDayNum();
+  const curDay = ROADMAP.find(d=>d.day===cur);
+  const roadmapDone = roadmapCompletedCount();
   return `
   <div class="eyebrow">Today's Mission</div>
   <h1>Good morning — let's build real VA skill.</h1>
   <div class="card" style="background:linear-gradient(135deg, var(--primary-d), var(--primary)); color:#fff; border:none;">
     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;">
       <div>
-        <div style="font-size:.78rem; opacity:.8; font-weight:600; letter-spacing:.03em;">FEATURED TASK</div>
-        <h2 style="color:#fff; margin-top:4px;">${featured.client}</h2>
-        <p style="opacity:.9; max-width:480px; margin-bottom:0;">"${featured.request.slice(0,110)}..."</p>
+        <div style="font-size:.78rem; opacity:.8; font-weight:600; letter-spacing:.03em;">DAY ${curDay.day} OF ${ROADMAP.length} · ${roadmapDone}/${ROADMAP.length} COMPLETE</div>
+        <h2 style="color:#fff; margin-top:4px;">${curDay.title}</h2>
+        <p style="opacity:.9; max-width:480px; margin-bottom:0;">${curDay.learn.slice(0,120)}...</p>
       </div>
-      <button class="btn btn-gold" onclick="go('taskDetail','${featured.id}')">Start This Task →</button>
+      <button class="btn btn-gold" onclick="goDay(${curDay.day})">Go to Day ${curDay.day} →</button>
     </div>
   </div>
 
@@ -811,7 +1288,7 @@ function renderTasks(){
 function mockGmail(task){
   const items = task.categorize ? task.categorize.emails.slice(0,5) : [
     {from:'Client Contact', subject:'Re: Project update', date:'9:02am'},
-    {from:'Newsletter', subject:'This week\\'s digest', date:'Yesterday'},
+    {from:'Newsletter', subject:'This week\'s digest', date:'Yesterday'},
     {from:'Team Member', subject:'Quick question', date:'Yesterday'},
   ];
   return `<div class="mock-window"><div class="mock-titlebar"><div class="mock-dot"></div><div class="mock-dot"></div><div class="mock-dot"></div>&nbsp;Gmail — Inbox</div>
@@ -1215,8 +1692,11 @@ function render(){
   renderNav();
   const main = document.getElementById('main');
   if(state.view==='dashboard') main.innerHTML = renderDashboard();
+  else if(state.view==='roadmap') main.innerHTML = renderRoadmap();
+  else if(state.view==='dayDetail') main.innerHTML = renderDayDetail(state.dayNum);
   else if(state.view==='tasks') main.innerHTML = renderTasks();
   else if(state.view==='taskDetail') main.innerHTML = renderTaskDetail(TASKS.find(t=>t.id===state.taskId));
+  else if(state.view==='interview') main.innerHTML = renderInterviewBank();
   else if(state.view==='tools') main.innerHTML = renderTools();
   else if(state.view==='cheatsheets') main.innerHTML = renderCheatSheets();
   else if(state.view==='mapping') main.innerHTML = renderMapping();
